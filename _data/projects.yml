@@ -2,20 +2,21 @@
   image: /assets/images/HelpNetwork.png
   link: /help-network
   description: >-
-    React based web application to help professionals ask and find important
-    legal and ethical questions. Developed backend with Python, Django,
-    PostgreSQL. Deployed to Heroku with CircleCI. Winner of the Turing School
-    final project competition.
+    React based web app to help professionals ask and find important legal and
+    ethical questions. Developed backend with Python, Django, PostgreSQL.
+    Deployed to Heroku with CircleCI. Winner of the Turing School final project
+    competition.
 - name: Virtual Watch Party
   link: /virtual-watch-party
   image: /assets/images/WatchMovies.jpeg
   description: >-
-    Web app that allows users to organize movie events. Developed backend with
-    Ruby on Rails, RSpec and PostgreSQL. Deployed to Heroku with TravisCI.
+    Web application that allows users to organize movie events. Developed
+    backend with Ruby on Rails, RSpec and PostgreSQL. Deployed to Heroku with
+    TravisCI.
 - name: Weatheraza
   link: /weatheraza
   image: /assets/images/seasonal.jpeg
   description: >-
-    Web app which collates data from three separate API's for users to see
-    weather at a specified destination. Developed backend with Ruby on Rails,
-    RSpec, and PostgresSQL
+    Web application which collates data from three separate API's for users to
+    see weather at a specified destination. Developed backend with Ruby on
+    Rails, RSpec, and PostgresSQL
