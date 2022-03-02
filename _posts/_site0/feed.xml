@@ -99,7 +99,7 @@ The blog card includes</p>
 </ul>
 
 <h3 id="projects--">Projects -</h3>
-<p>The Projects page will include all the projects from the <strong><code class="language-plaintext highlighter-rouge">projects.yml</code></strong> file which is present in the _data folder.<br />
+<p>The Projects page will include all the projects from the <strong><code class="language-plaintext highlighter-rouge">t-projects.yml</code></strong> file which is present in the _data folder.<br />
 Projects will be showcased in a card-list format where each card will contain</p>
 <ul>
   <li>An image related to the project</li>
