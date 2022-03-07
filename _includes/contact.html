@@ -71,6 +71,9 @@
                 {% unless site.discord_id ==  %}
                 <a href="https://discordapp.com/users/{{site.discord_id}}" target="_blank" class="has-text-black"><i class="fab fa-discord"></i></a>
                 {% endunless %}
+                {% unless site.itch_io_username ==  %}
+                <a href="https://{{site.itch_io_username}}.itch.io" target="_blank" class="has-text-black"><i class="fab fa-itch-io"></i></a>
+                {% endunless %}
             </div>
         </div>
     </div>
