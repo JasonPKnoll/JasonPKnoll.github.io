@@ -33,7 +33,7 @@ layout: page
 | Command     | Example Input           | Description                                                                                                                                        |
 |-------------|-------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
 | !giveme     | !giveme 10              | Adds the designated number of emojis to the users name up to the maximum that can be added based on the max characters left in the users nickname. |
-| !transferto | !transferto @other_user | Transfers the designated amount of emojis from one users name to the specified user name.                                                          |
+| !transferto | !transferto @other_user 5 | Transfers the designated amount of emojis from one users name to the specified user name.                                                          |
 
 <br>
 ####  Meme Listeners
