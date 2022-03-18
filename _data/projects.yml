@@ -10,13 +10,13 @@
   link: /virtual-watch-party
   image: /assets/images/WatchMovies.jpeg
   description: >-
-    Web application that allows users to organize movie events. Developed
+    Web app that allows users to organize movie events. Developed
     backend with Ruby on Rails, RSpec and PostgreSQL. Deployed to Heroku with
     TravisCI.
 - name: Weatheraza
   link: /weatheraza
   image: /assets/images/seasonal.jpeg
   description: >-
-    Web application which collates data from three separate API's for users to
+    Web app which collates data from three separate API's for users to
     see weather at a specified destination. Developed backend with Ruby on
     Rails, RSpec, and PostgresSQL

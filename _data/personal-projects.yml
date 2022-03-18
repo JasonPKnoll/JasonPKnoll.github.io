@@ -2,7 +2,7 @@
   link: /discord-bot
   image: /assets/images/DiscordBot.png
   description: >-
-    A Discord bot thats main functionality is to spread emoji's throughout the
+    A Discord bot whos main functionality is to spread emoji's throughout the
     server by adding them to existing members names. The bot has some additional
     functionality for moderation, which will be expanded upon in the future.
 - name: Koi Fish Pond
