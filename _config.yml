@@ -19,7 +19,7 @@ behance_username: /
 dribbble_username: /
 spotify_username: /
 itch_io_username: timelincoln
-discord_id: 948668827355463782
+discord_id: 948668827355463800
 google-analytics: UA-163806439-1
 disqus-shortname: Jason Knoll
 author-name: Jason Knoll
@@ -30,10 +30,17 @@ author-about: >-
   and improvement. Finding fulfillment in work was the most substantial
   contributor to my career transition into Software development. Before finding
   my appreciation for software development, I worked in financial sales for
-  seven years. My previous role allowed me to build considerable communication
-  through working with over eighty branches in my assigned territory. In
-  addition, I developed strong communication with over one hundred and fifty
-  colleagues located in different sectors throughout the firm.
+  seven years. I was able to thrive in my previous role through my constant
+  desire to improve, learn, and teach others. 
+
+
+  Have a passion for building 3D models and environments for Virtual Reality.  I
+  spend much of my free time exploring technologies such as Blender, Unity, C#,
+  amplify, etc. that I utilize in the creation of VR environments. I love to
+  learn from and teach others. Communities that cultivate a collaborative
+  culture will always thrive,  innovate, and inspire others. This is why I
+  strive to cultivate collaboration in all endeavors I take on. Be it at work or
+  through my hobbies in programming, music, or 3D modeling.
 author-url: 'https://github.com/JasonPKnoll'
 sass:
   sass_dir: _sass
