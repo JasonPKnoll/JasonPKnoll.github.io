@@ -2,11 +2,11 @@ markdown: kramdown
 url: ''
 baseurl: null
 title: Jason Knoll
-description: 'Discover, build, explore.'
+description: Software Developer
 site-image: /assets/images/meta.jpg
 site-keywords: 'Site, Template, Theme'
-favicon-url: null
-heroimage: /assets/images/Phoenix.jpg
+favicon-url: /assets/images/logo.png
+heroimage: /assets/images/suzanne.jpg
 email: jason.p.knoll@gmail.com
 facebook_username: /
 twitter_username: JasonPKnoll
