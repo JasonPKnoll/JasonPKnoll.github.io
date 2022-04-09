@@ -52,7 +52,7 @@ layout: page
 <hr style="border:2px solid grey">
 
 ### Shader
-> The shader is very early on and still a big work in progress much like everything else. This shader was built using a node-based shader creation tool called Amplify. The main goals of this shader are to give the fish two distinct colors ,and a pattern that can be altered via propreity blocks in the C# code, and to give the Koi fish the appearance of wiggling in the water. 
+> The shader is very early on and still a big work in progress much like everything else. This shader was built using a node-based shader creation tool called Amplify. The main goals of this shader are to give the fish two distinct colors, and a pattern that can be altered via propreity blocks in the C# code, and to give the Koi fish the appearance of wiggling in the water. 
 
 <br>
 

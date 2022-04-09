@@ -3,9 +3,9 @@ url: ''
 baseurl: null
 title: Jason Knoll
 description: Software Developer
-site-image: /assets/images/meta.jpg
+site-image: /assets/images/Meta.png
 site-keywords: 'Site, Template, Theme'
-favicon-url: /assets/images/logo.png
+favicon-url: /assets/images/logo.ico?
 heroimage: /assets/images/suzanne.jpg
 email: jason.p.knoll@gmail.com
 facebook_username: /
