@@ -47,6 +47,23 @@
 
 	let input: HTMLInputElement;
 	let screen: HTMLDivElement;
+	let doom: HTMLDialogElement;
+	/** The game only loads once someone finds and runs doom.exe. */
+	let playing = $state(false);
+
+	const DOOM_EMBED = 'https://archive.org/embed/DoomsharewareEpisode';
+	const DOOM_PAGE = 'https://archive.org/details/DoomsharewareEpisode';
+
+	async function say(...lines: Line[]) {
+		entries = [...entries, ...lines.map((line) => ({ line }))];
+		await scrollDown();
+	}
+
+	function closeDoom() {
+		playing = false;
+		say([{ t: 'doom.exe exited with code 0', tone: 'dim' }]);
+		input?.focus({ preventScroll: true });
+	}
 
 	async function scrollDown() {
 		await tick();
@@ -66,7 +83,9 @@
 		else entries = [...entries, { prompt: here, cmd: text }, ...result.lines.map((line) => ({ line }))];
 		if (result.cwd) cwd = result.cwd;
 		await scrollDown();
-		if (result.action) go(result.action);
+		if (result.action?.kind === 'doom' && matchMedia('(hover: none) and (pointer: coarse)').matches) {
+			say([{ t: 'doom.exe: this one needs a keyboard. Try it on a computer.', tone: 'coral' }]);
+		} else if (result.action) go(result.action);
 	}
 
 	function go(action: Action) {
@@ -95,6 +114,10 @@
 				case 'external':
 					if (action.href.startsWith('mailto:')) location.href = action.href;
 					else window.open(action.href, '_blank', 'noopener');
+					break;
+				case 'doom':
+					playing = true;
+					tick().then(() => doom.showModal());
 			}
 		}, 450);
 	}
@@ -201,6 +224,35 @@
 		</label>
 	</div>
 </div>
+
+<dialog
+	class="doom"
+	bind:this={doom}
+	onclose={closeDoom}
+	onclick={(e) => e.target === doom && doom.close()}
+	aria-label="DOOM, shareware episode"
+>
+	{#if playing}
+		<div class="window">
+			<div class="bar">
+				<span></span><span></span><span></span>
+				<p class="mono">doom.exe</p>
+				<button type="button" class="close mono" onclick={() => doom.close()} aria-label="Quit DOOM">quit ✕</button>
+			</div>
+			<iframe
+				src={DOOM_EMBED}
+				title="DOOM shareware episode, running in the Internet Archive emulator"
+				allow="autoplay; fullscreen; gamepad"
+				allowfullscreen
+			></iframe>
+			<p class="credit mono">
+				DOOM shareware © id Software, played through the
+				<a href={DOOM_PAGE} target="_blank" rel="noopener">Internet Archive</a>. Click the game to give it the
+				keyboard. Click outside it or press quit to exit.
+			</p>
+		</div>
+	{/if}
+</dialog>
 
 <style>
 	.terminal {
@@ -357,5 +409,64 @@
 			animation: none;
 			opacity: 1;
 		}
+	}
+	/* doom.exe */
+	.doom {
+		width: min(1100px, 100vw - 2rem);
+		max-width: none;
+		max-height: none;
+		padding: 0;
+		border: 0;
+		background: none;
+		color: var(--text);
+		overflow: visible;
+	}
+	.doom::backdrop {
+		background: rgb(4 5 8 / 0.82);
+		backdrop-filter: blur(6px);
+	}
+	.window {
+		border-radius: var(--radius);
+		background: #0d0f14;
+		border: 1px solid var(--border-strong);
+		box-shadow: 0 40px 120px -20px rgb(0 0 0 / 0.9);
+		overflow: hidden;
+	}
+	.window .bar p {
+		transform: none;
+	}
+	.close {
+		all: unset;
+		cursor: pointer;
+		font-size: 0.72rem;
+		color: var(--text-dim);
+		padding: 0.15rem 0.5rem;
+		border-radius: 6px;
+		border: 1px solid var(--border);
+	}
+	.close:hover,
+	.close:focus-visible {
+		color: var(--text);
+		border-color: var(--border-strong);
+	}
+	iframe {
+		display: block;
+		width: 100%;
+		/* Fill the screen but stay 4:3 like the original. */
+		height: min(calc((min(1100px, 100vw - 2rem)) * 0.75), 100dvh - 9rem);
+		border: 0;
+		background: #000;
+	}
+	.credit {
+		margin: 0;
+		padding: 0.6rem 0.9rem;
+		font-size: 0.7rem;
+		color: var(--text-dim);
+		border-top: 1px solid var(--border);
+	}
+	.credit a {
+		color: var(--text-muted);
+		text-decoration: underline;
+		text-underline-offset: 2px;
 	}
 </style>

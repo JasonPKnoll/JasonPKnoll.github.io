@@ -17,11 +17,13 @@ export type Action =
 	| { kind: 'page'; path: '/projects' | '/resume' }
 	| { kind: 'section'; id: 'about' | 'work' | 'contact' }
 	| { kind: 'file'; href: string }
-	| { kind: 'external'; href: string };
+	| { kind: 'external'; href: string }
+	| { kind: 'doom' };
 
 export type Result = { lines: Line[]; action?: Action; clear?: boolean; cwd?: string[] };
 
-type File = { type: 'file'; body: () => Line[]; action?: Action };
+/** An `exec` file runs its action when called by path, like ./doom.exe. */
+type File = { type: 'file'; body: () => Line[]; action?: Action; exec?: boolean };
 /** `browse` dirs are entered with cd; other dirs with an action take you to that page. */
 type Dir = {
 	type: 'dir';
@@ -136,7 +138,31 @@ const root: Dir = {
 		},
 		home: { type: 'dir', children: { jk: home } },
 		root: { type: 'dir', locked: true, children: {} },
-		tmp: { type: 'dir', children: {} }
+		tmp: {
+			type: 'dir',
+			children: {
+				'note.txt': file(
+					'Note to self: the good stuff is in /usr/games.',
+					"Don't cat it. Run it."
+				)
+			}
+		},
+		usr: {
+			type: 'dir',
+			children: {
+				games: {
+					type: 'dir',
+					children: {
+						'doom.exe': {
+							type: 'file',
+							exec: true,
+							action: { kind: 'doom' },
+							body: () => [p('MZ ¸ÿÿ@º´Í!¸LÍ! This program cannot be catted. Try running it.', 'dim')]
+						}
+					}
+				}
+			}
+		}
 	}
 };
 
@@ -218,7 +244,9 @@ const listing = (dir: Dir, parts: string[]): Line => {
 		line.push(
 			node.type === 'dir'
 				? { t: `${name}/`, tone: node.locked ? 'dim' : 'blue', run: node.locked ? undefined : `cd ${path}` }
-				: { t: name, run: `cat ${path}` }
+				: node.exec
+					? { t: `${name}*`, tone: 'accent', run: path }
+					: { t: name, run: `cat ${path}` }
 		);
 		if (i < entries.length - 1) line.push({ t: '  ' });
 	});
@@ -277,6 +305,15 @@ export function run(input: string, state: State): Result {
 	const arg = args.filter((a) => !a.startsWith('-'))[0];
 	const err = (msg: string): Result => ({ lines: [p(msg, 'coral')] });
 
+	// Running a file by its path, like ./doom.exe or /usr/games/doom.exe.
+	if (cmd.includes('/')) {
+		const hit = find(cmd, state.cwd);
+		if (!hit) return err(`${cmd}: No such file or directory`);
+		if (hit.node.type === 'dir') return err(`${cmd}: Is a directory`);
+		if (!hit.node.exec || !hit.node.action) return err(`${cmd}: Permission denied`);
+		return launch(hit.node.action);
+	}
+
 	switch (cmd) {
 		case '':
 			return { lines: [] };
@@ -330,6 +367,7 @@ export function run(input: string, state: State): Result {
 			if (!hit) return err(`open: ${arg}: No such file or directory`);
 			const action = hit.node.action;
 			if (!action) return err(`open: nothing to open for ${arg}`);
+			if (hit.node.type === 'file' && hit.node.exec) return launch(action);
 			return { lines: [opening(action)], action };
 		}
 		case 'pwd':
@@ -384,9 +422,24 @@ export function run(input: string, state: State): Result {
 		case 'coffee':
 		case 'brew':
 			return { lines: [p('Brewing... ☕ ready. Back to work.', 'muted')] };
-		default:
+		default: {
+			const here = walk(state.cwd);
+			const local = here?.type === 'dir' ? here.children[cmd] : undefined;
+			if (local?.type === 'file' && local.exec) return err(`command not found: ${cmd}. Did you mean ./${cmd}?`);
 			return err(`command not found: ${cmd}. Try help.`);
+		}
 	}
+}
+
+function launch(action: Action): Result {
+	if (action.kind !== 'doom') return { lines: [opening(action)], action };
+	return {
+		lines: [
+			p('DOOM shareware, id Software, 1993', 'coral'),
+			p('Loading from the Internet Archive...', 'muted')
+		],
+		action
+	};
 }
 
 function opening(action: Action): Line {
@@ -399,7 +452,9 @@ function opening(action: Action): Line {
 					? `#${action.id}`
 					: action.kind === 'file'
 						? action.href.slice(1)
-						: action.href.replace(/^mailto:/, '').replace(/^https?:\/\/(www\.)?/, '');
+						: action.kind === 'doom'
+							? 'doom.exe'
+							: action.href.replace(/^mailto:/, '').replace(/^https?:\/\/(www\.)?/, '');
 	const verb = action.kind === 'file' ? 'downloading' : 'opening';
 	return [
 		{ t: '→ ', tone: 'accent' },
@@ -417,7 +472,7 @@ export function complete(input: string, cwd: string[]): { input: string; options
 	const last = words.at(-1) ?? '';
 	let options: string[];
 	let base = '';
-	if (words.length === 1) {
+	if (words.length === 1 && !last.includes('/')) {
 		options = commands.filter((c) => c.startsWith(last));
 	} else if (words[0] === 'open' && !last.includes('/')) {
 		const here = (walk(cwd) as Dir).children;
