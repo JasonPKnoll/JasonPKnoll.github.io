@@ -212,7 +212,8 @@
 			let marks = `M${j} ${y1} Q${c} ${y1} ${x1} ${y1 - 6.5} M${j} ${y1} Q${c} ${y1} ${x1} ${y1 + 6.5}`;
 			let d: string;
 
-			if (to === schema.banner && top) {
+			if (to === schema.banner && top && lx > top.l && lx < top.r) {
+				// Lane sits under the banner: straight up into its bottom edge.
 				const y2 = top.b;
 				d = rounded([
 					[x1, y1],
@@ -221,6 +222,19 @@
 				]);
 				// "One" end: a double bar right against the table.
 				marks += ` M${lx - 5} ${y2 + 4} H${lx + 5} M${lx - 5} ${y2 + 8} H${lx + 5}`;
+			} else if (to === schema.banner && top) {
+				// Outer lane, beside the banner: up, then turn into its side edge.
+				const left = lx <= top.l;
+				const x2 = left ? top.l : top.r;
+				const n2 = left ? -1 : 1;
+				const y2 = top.y;
+				d = rounded([
+					[x1, y1],
+					[lx, y1],
+					[lx, y2],
+					[x2, y2]
+				]);
+				marks += ` M${x2 + n2 * 4} ${y2 - 5} V${y2 + 5} M${x2 + n2 * 8} ${y2 - 5} V${y2 + 5}`;
 			} else {
 				const b = card(to);
 				const targetRight = columnOf.get(to)! >= g;
