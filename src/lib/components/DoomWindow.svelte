@@ -59,7 +59,7 @@ DOOM.EXE
 
 	let dialog: HTMLDialogElement;
 	let screen: HTMLDivElement;
-	let player: { stop: () => Promise<void> } | undefined;
+	let player: DosProps | undefined;
 	let closing = false;
 
 	async function step<T>(text: string, work: () => Promise<T>): Promise<T> {
@@ -144,7 +144,8 @@ DOOM.EXE
 		});
 	}
 
-	type DosFn = (el: HTMLElement, options: Record<string, unknown>) => { stop: () => Promise<void> };
+	type DosProps = { stop: () => Promise<void>; setFullScreen: (on: boolean) => void };
+	type DosFn = (el: HTMLElement, options: Record<string, unknown>) => DosProps;
 
 	function quit() {
 		if (closing) return;
@@ -166,7 +167,21 @@ DOOM.EXE
 >
 	<div class="window">
 		<div class="bar">
-			<span></span><span></span><span></span>
+			<div class="lights">
+				<button type="button" class="light red" onclick={quit} aria-label="Quit DOOM" title="Quit">
+					<svg viewBox="0 0 8 8" aria-hidden="true"><path d="M2 2l4 4M6 2L2 6" /></svg>
+				</button>
+				<span class="light yellow" aria-hidden="true"></span>
+				<button
+					type="button"
+					class="light green"
+					onclick={() => player?.setFullScreen(true)}
+					aria-label="Full screen"
+					title="Full screen"
+				>
+					<svg viewBox="0 0 8 8" aria-hidden="true"><path d="M2 5V2h3M6 3v3H3" /></svg>
+				</button>
+			</div>
 			<p class="mono">doom.exe</p>
 			<button type="button" class="close mono" onclick={quit} aria-label="Quit DOOM">quit ✕</button>
 		</div>
@@ -228,11 +243,48 @@ DOOM.EXE
 		padding: 0.55rem 0.7rem 0.55rem 0.9rem;
 		border-bottom: 1px solid var(--border);
 	}
-	.bar span {
-		width: 11px;
-		height: 11px;
+	/* macOS style window controls: red quits, green goes full screen. */
+	.lights {
+		display: flex;
+		gap: 8px;
+	}
+	.light {
+		all: unset;
+		display: grid;
+		place-items: center;
+		width: 12px;
+		height: 12px;
 		border-radius: 50%;
+		box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 0.25);
+	}
+	button.light {
+		cursor: pointer;
+	}
+	.red {
+		background: #ff5f57;
+	}
+	.yellow {
 		background: var(--border-strong);
+	}
+	.green {
+		background: #28c840;
+	}
+	.light svg {
+		width: 8px;
+		height: 8px;
+		fill: none;
+		stroke: rgb(0 0 0 / 0.6);
+		stroke-width: 1.3;
+		stroke-linecap: round;
+		opacity: 0;
+	}
+	.lights:hover svg,
+	.light:focus-visible svg {
+		opacity: 1;
+	}
+	.light:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 2px;
 	}
 	.bar p {
 		margin: 0 auto;
