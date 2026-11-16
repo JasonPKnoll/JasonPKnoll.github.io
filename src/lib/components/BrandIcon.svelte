@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { siDiscord, siGithub, siItchdotio, siX } from 'simple-icons';
+	import { siDiscord, siGithub, siX } from 'simple-icons';
 
-	type Brand = 'github' | 'linkedin' | 'x' | 'discord' | 'itch';
+	type Brand = 'github' | 'linkedin' | 'x' | 'discord';
 	let { name, size = 20 }: { name: Brand; size?: number } = $props();
 
 	// LinkedIn isn't distributed by simple-icons, so it's drawn by hand.
@@ -12,8 +12,7 @@
 		github: siGithub.path,
 		linkedin,
 		x: siX.path,
-		discord: siDiscord.path,
-		itch: siItchdotio.path
+		discord: siDiscord.path
 	};
 </script>
 
