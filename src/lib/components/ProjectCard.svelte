@@ -3,11 +3,34 @@
 	import { ArrowUpRight, Trophy } from '@lucide/svelte';
 	import type { Project } from '#lib/projects.ts';
 	import { categories } from '#lib/projects.ts';
+	import BrandIcon from './BrandIcon.svelte';
 
 	let { project, featured = false }: { project: Project; featured?: boolean } = $props();
+
+	// One repo reads "Code"; several use the first word of each label ("Backend", "Frontend").
+	const short = (label: string) => (project.links.length > 1 ? label.split(' ')[0] : 'Code');
+	const full = (label: string) => (label.includes('GitHub') ? label : `${label} on GitHub`);
 </script>
 
-<a class="card" class:featured href={resolve('/projects/[slug]', { slug: project.slug })}>
+<!-- The title link stretches over the whole card, so the repo links can sit on top of it. -->
+<article class="card" class:featured>
+	{#if project.links.length}
+		<div class="repos">
+			{#each project.links as link (link.href)}
+				<a
+					class="repo"
+					href={link.href}
+					target="_blank"
+					rel="noopener noreferrer"
+					aria-label="{project.name}: {full(link.label)}"
+					title={full(link.label)}
+				>
+					<BrandIcon name="github" size={15} />
+					{short(link.label)}
+				</a>
+			{/each}
+		</div>
+	{/if}
 	<div
 		class="cover"
 		class:contain={!!project.coverContain}
@@ -25,7 +48,7 @@
 			<span class="cat mono">{categories[project.category]}</span>
 		</div>
 		<h3>
-			{project.name}
+			<a class="main" href={resolve('/projects/[slug]', { slug: project.slug })}>{project.name}</a>
 			<ArrowUpRight class="arrow" size={20} />
 		</h3>
 		{#if project.highlight}
@@ -38,10 +61,11 @@
 			{/each}
 		</ul>
 	</div>
-</a>
+</article>
 
 <style>
 	.card {
+		position: relative;
 		display: flex;
 		flex-direction: column;
 		height: 100%;
@@ -58,6 +82,53 @@
 		transform: translateY(-4px);
 		border-color: var(--border-strong);
 		box-shadow: 0 24px 60px -30px rgb(124 242 201 / 0.25);
+	}
+	.main::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+	}
+	.main:focus-visible {
+		outline: none;
+	}
+	.card:has(.main:focus-visible) {
+		outline: 2px solid var(--accent);
+		outline-offset: 3px;
+	}
+	.repos {
+		position: absolute;
+		top: 0.85rem;
+		right: 0.85rem;
+		z-index: 2;
+		display: flex;
+		gap: 0.4rem;
+	}
+	.repo {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.4rem 0.75rem 0.4rem 0.6rem;
+		border-radius: 999px;
+		font-size: 0.8rem;
+		font-weight: 600;
+		color: var(--text);
+		background: rgb(10 11 15 / 0.78);
+		border: 1px solid rgb(255 255 255 / 0.18);
+		backdrop-filter: blur(8px);
+		-webkit-backdrop-filter: blur(8px);
+		box-shadow: 0 4px 14px rgb(0 0 0 / 0.35);
+		transition:
+			background 0.2s,
+			color 0.2s,
+			border-color 0.2s,
+			transform 0.2s var(--ease);
+	}
+	.repo:hover {
+		background: var(--text);
+		color: var(--bg);
+		border-color: var(--text);
+		transform: translateY(-1px);
 	}
 	.cover {
 		aspect-ratio: 16 / 10;

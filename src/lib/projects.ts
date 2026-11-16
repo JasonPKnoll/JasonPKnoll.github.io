@@ -171,7 +171,7 @@ export const projects: Project[] = [
 		cover: koiCover,
 		coverAlt: 'Illustration of two koi fish swimming among cherry blossoms',
 		tech: ['Unity', 'C#', 'VR', 'Amplify Shader Editor'],
-		links: [{ label: 'GitHub repository', href: 'https://github.com/JasonPKnoll/koi_pond' }],
+		links: [{ label: 'View the code on GitHub', href: 'https://github.com/JasonPKnoll/koi_pond' }],
 		groups: [
 			{
 				title: 'Behavior',
@@ -273,7 +273,7 @@ export const projects: Project[] = [
 		cover: discordCover,
 		coverAlt: 'Fido Bot artwork',
 		tech: ['Discord API', 'MongoDB'],
-		links: [{ label: 'GitHub repository', href: 'https://github.com/JasonPKnoll/fido_bot' }],
+		links: [{ label: 'View the code on GitHub', href: 'https://github.com/JasonPKnoll/fido_bot' }],
 		groups: [
 			{
 				title: 'Commands',
@@ -412,7 +412,7 @@ export const projects: Project[] = [
 		cover: watchCover,
 		coverAlt: 'Movie night illustration',
 		tech: ['Ruby on Rails', 'RSpec', 'PostgreSQL', 'Heroku', 'TravisCI'],
-		links: [{ label: 'GitHub repository', href: 'https://github.com/bfl3tch/viewing_party' }],
+		links: [{ label: 'View the code on GitHub', href: 'https://github.com/bfl3tch/viewing_party' }],
 		groups: [
 			{
 				title: 'Features',
@@ -448,7 +448,7 @@ export const projects: Project[] = [
 		cover: weatherCover,
 		coverAlt: 'Illustration of the four seasons',
 		tech: ['Ruby on Rails', 'RSpec', 'PostgreSQL', 'REST APIs'],
-		links: [{ label: 'GitHub repository', href: 'https://github.com/JasonPKnoll/weatheraza' }],
+		links: [{ label: 'View the code on GitHub', href: 'https://github.com/JasonPKnoll/weatheraza' }],
 		groups: []
 	}
 ];
