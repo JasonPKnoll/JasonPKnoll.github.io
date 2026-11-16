@@ -7,23 +7,14 @@
 	import ProjectCard from '#lib/components/ProjectCard.svelte';
 	import Seo from '#lib/components/Seo.svelte';
 	import Terminal from '#lib/components/Terminal.svelte';
-	import { projects } from '#lib/projects.ts';
+	import { getProject, projects } from '#lib/projects.ts';
 	import { reveal } from '#lib/reveal.ts';
 	import { person, website } from '#lib/schema.ts';
 	import { site } from '#lib/site.ts';
 
-	const [featured, ...rest] = [
-		projects.find((p) => p.slug === 'help-network')!,
-		...projects.filter((p) => p.slug !== 'help-network' && p.slug !== 'weatheraza')
-	];
-
-	const contacts = [
-		{ name: 'linkedin', label: 'LinkedIn', handle: 'in/jason-p-knoll', href: site.socials.linkedin },
-		{ name: 'github', label: 'GitHub', handle: '@JasonPKnoll', href: site.socials.github },
-		{ name: 'discord', label: 'Discord', handle: 'Message me', href: site.socials.discord },
-		{ name: 'itch', label: 'itch.io', handle: 'timelincoln', href: site.socials.itch },
-		{ name: 'x', label: 'X (Twitter)', handle: '@JasonPKnoll', href: site.socials.x }
-	] as const;
+	// Help Network leads; Weatheraza only appears on the full projects page.
+	const featured = getProject('help-network')!;
+	const rest = projects.filter((p) => p !== featured && p.slug !== 'weatheraza');
 </script>
 
 <Seo type="profile" jsonLd={[person, website]} />
@@ -34,20 +25,19 @@
 	<div class="fade" aria-hidden="true"></div>
 	<div class="container hero-inner">
 		<div class="hero-copy">
-			<p class="eyebrow hero-in" style="--d: 0">Hi, I'm {site.name} 👋</p>
-			<h1 class="hero-in" style="--d: 1">
+			<h1 class="hero-in" style="--d: 0">
 				{site.role}.<br />
 				<span class="gradient-text">{site.tagline}</span>
 			</h1>
-			<p class="lede hero-in" style="--d: 2">{site.intro}</p>
-			<div class="actions hero-in" style="--d: 3">
+			<p class="lede hero-in" style="--d: 1">{site.intro}</p>
+			<div class="actions hero-in" style="--d: 2">
 				<a class="btn btn-primary" href={resolve('/projects')}>
 					View my work <ArrowRight size={18} />
 				</a>
 				<a class="btn" href="#contact">Get in touch</a>
 			</div>
 		</div>
-		<div class="hero-terminal hero-in" style="--d: 2">
+		<div class="hero-terminal hero-in" style="--d: 1">
 			<Terminal />
 		</div>
 	</div>
@@ -57,7 +47,7 @@
 <!-- About -->
 <section id="about" class="section container">
 	<header class="section-head reveal" {@attach reveal()}>
-		<p class="eyebrow">01 — About</p>
+		<p class="eyebrow">About</p>
 		<h2>From financial sales to building software</h2>
 	</header>
 
@@ -88,7 +78,7 @@
 <section id="work" class="section container">
 	<header class="section-head split reveal" {@attach reveal()}>
 		<div>
-			<p class="eyebrow">02 — Selected work</p>
+			<p class="eyebrow">Selected work</p>
 			<h2>Things I've built</h2>
 		</div>
 		<a class="btn" href={resolve('/projects')}>All projects <ArrowRight size={16} /></a>
@@ -109,10 +99,10 @@
 <!-- Contact -->
 <section id="contact" class="section container">
 	<div class="contact reveal" {@attach reveal()}>
-		<p class="eyebrow">03 — Contact</p>
+		<p class="eyebrow">Contact</p>
 		<h2>Let's build something together.</h2>
 		<p class="lede">
-			Whether it's a role, a collaboration, or just talking VR and 3D — my inbox is open.
+			If you're hiring, want to work on something together, or just want to talk VR and 3D, send me an email.
 		</p>
 		<a class="btn btn-primary email" href="mailto:{site.email}">
 			<Mail size={18} />
@@ -120,7 +110,7 @@
 		</a>
 
 		<ul class="contacts">
-			{#each contacts as c (c.name)}
+			{#each site.socials as c (c.name)}
 				<li>
 					<a href={c.href} target="_blank" rel="noopener noreferrer">
 						<BrandIcon name={c.name} size={20} />
@@ -174,7 +164,7 @@
 		font-size: clamp(2.4rem, 5.4vw, 4.2rem);
 		font-weight: 700;
 		letter-spacing: -0.035em;
-		margin: 1rem 0 1.4rem;
+		margin: 0 0 1.4rem;
 	}
 	.lede {
 		font-size: clamp(1.05rem, 1.6vw, 1.2rem);

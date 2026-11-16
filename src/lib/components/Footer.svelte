@@ -2,14 +2,6 @@
 	import { resolve } from '$app/paths';
 	import { site } from '#lib/site.ts';
 	import BrandIcon from './BrandIcon.svelte';
-
-	const socials = [
-		{ name: 'github', label: 'GitHub', href: site.socials.github },
-		{ name: 'linkedin', label: 'LinkedIn', href: site.socials.linkedin },
-		{ name: 'x', label: 'X (Twitter)', href: site.socials.x },
-		{ name: 'discord', label: 'Discord', href: site.socials.discord },
-		{ name: 'itch', label: 'itch.io', href: site.socials.itch }
-	] as const;
 </script>
 
 <footer>
@@ -19,7 +11,7 @@
 			<p class="mono small">© {new Date().getFullYear()} · Built with SvelteKit</p>
 		</div>
 		<ul aria-label="Social links">
-			{#each socials as s (s.name)}
+			{#each site.socials as s (s.name)}
 				<li>
 					<a href={s.href} target="_blank" rel="noopener noreferrer" title={s.label}>
 						<BrandIcon name={s.name} size={18} />

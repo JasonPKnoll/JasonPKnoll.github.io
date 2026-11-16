@@ -6,7 +6,7 @@
 
 	const lines: Line[] = [
 		{ prompt: '~', text: 'whoami' },
-		{ text: `${site.name.toLowerCase().replace(' ', '-')} — ${site.role.toLowerCase()}`, tone: 'accent' },
+		{ text: `${site.name.toLowerCase().replace(' ', '-')}, ${site.role.toLowerCase()}`, tone: 'accent' },
 		{ prompt: '~', text: 'cat interests.txt' },
 		{ text: 'web apps · bots · virtual reality · 3D', tone: 'muted' },
 		{ prompt: '~', text: 'ls projects/' },
@@ -17,7 +17,7 @@
 <div class="terminal" role="img" aria-label="Terminal showing a short introduction">
 	<div class="bar" aria-hidden="true">
 		<span></span><span></span><span></span>
-		<p class="mono">zsh — jk@portfolio</p>
+		<p class="mono">jk@portfolio: ~</p>
 	</div>
 	<pre class="mono" aria-hidden="true">{#each lines as line, i (i)}<span
 				class="line {line.tone ?? ''}"
