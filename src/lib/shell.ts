@@ -436,7 +436,7 @@ function launch(action: Action): Result {
 	return {
 		lines: [
 			p('DOOM shareware, id Software, 1993', 'coral'),
-			p('Loading from the Internet Archive...', 'muted')
+			p('Booting DOSBox...', 'muted')
 		],
 		action
 	};
