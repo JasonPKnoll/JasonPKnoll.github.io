@@ -11,6 +11,7 @@
 	const links = [
 		{ href: resolve('/') + '#about', label: 'About' },
 		{ href: resolve('/projects'), label: 'Projects' },
+		{ href: resolve('/resume'), label: 'Resume' },
 		{ href: resolve('/') + '#contact', label: 'Contact' }
 	];
 

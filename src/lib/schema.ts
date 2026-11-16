@@ -64,3 +64,38 @@ export const projectPage = (project: Project, path: string) => {
 		...(project.status && { creativeWorkStatus: project.status })
 	};
 };
+
+/** ProfilePage for /resume, describing the same Person with resume details. */
+export const resumePage = (r: typeof import('#lib/resume.ts').resume, path: string) => ({
+	'@context': 'https://schema.org',
+	'@type': 'ProfilePage',
+	url: abs(path),
+	name: `${r.name} Resume`,
+	inLanguage: 'en',
+	isPartOf: { '@id': websiteId },
+	mainEntity: {
+		'@type': 'Person',
+		'@id': personId,
+		name: r.name,
+		jobTitle: r.headline,
+		email: `mailto:${r.email}`,
+		address: { '@type': 'PostalAddress', addressLocality: 'Denver', addressRegion: 'CO', addressCountry: 'US' },
+		description: r.summary,
+		knowsAbout: r.skills,
+		hasOccupation: r.experience.flatMap((job) =>
+			job.roles.map((role) => ({
+				'@type': 'Occupation',
+				name: role.title,
+				description: role.summary,
+				skills: role.highlights.join(' ')
+			}))
+		),
+		alumniOf: r.education.map((e) => ({ '@type': 'EducationalOrganization', name: e.school })),
+		hasCredential: r.education.map((e) => ({
+			'@type': 'EducationalOccupationalCredential',
+			name: e.credential,
+			recognizedBy: { '@type': 'EducationalOrganization', name: e.school }
+		})),
+		sameAs: r.links.map((l) => l.href)
+	}
+});
