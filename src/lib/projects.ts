@@ -40,8 +40,13 @@ export type SchemaTable = {
 /** A database diagram, drawn on the page instead of shown as an image. */
 export type Schema = {
 	label: string;
-	/** CSS grid-template-areas rows (three columns), using table names. */
-	areas: string[];
+	/** A table most others point at, drawn full width across the top. */
+	banner?: string;
+	/**
+	 * Table names, column by column, left to right. Keep each table next to (or in
+	 * the same column as) the tables it points to, so wires stay short.
+	 */
+	columns: string[][];
 	tables: SchemaTable[];
 };
 
@@ -99,11 +104,12 @@ const col = (name: string, type: string): SchemaColumn => ({ name, type });
 
 const helpNetworkSchema: Schema = {
 	label: 'Entity relationship diagram of the HeLP Network database',
-	areas: [
-		'connections question_flags question_votes',
-		'users posts tagging',
-		'users responses tag',
-		'response_flags response_votes .'
+	banner: 'users',
+	columns: [
+		['question_flags', 'question_votes'],
+		['posts', 'tagging', 'tag'],
+		['responses', 'connections'],
+		['response_votes', 'response_flags']
 	],
 	tables: [
 		{
