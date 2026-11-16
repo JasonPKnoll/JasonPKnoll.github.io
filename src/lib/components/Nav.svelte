@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { Menu, X } from '@lucide/svelte';
 	import { site } from '#lib/site.ts';
+	import SunMark from './SunMark.svelte';
 
 	let open = $state(false);
 	let scrolled = $state(false);
@@ -28,7 +29,7 @@
 <header class:scrolled class:open>
 	<nav class="container" aria-label="Main">
 		<a class="brand" href={resolve('/')}>
-			<span class="mark mono" aria-hidden="true">jk</span>
+			<SunMark />
 			<span>{site.name}</span>
 		</a>
 
@@ -90,17 +91,6 @@
 		gap: 0.65rem;
 		font-weight: 600;
 		letter-spacing: -0.01em;
-	}
-	.mark {
-		display: grid;
-		place-items: center;
-		width: 32px;
-		height: 32px;
-		border-radius: 9px;
-		background: var(--gradient);
-		color: var(--bg);
-		font-weight: 700;
-		font-size: 0.85rem;
 	}
 	ul {
 		display: flex;
