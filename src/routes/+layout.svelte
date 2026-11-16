@@ -1,5 +1,6 @@
 <script lang="ts">
 	import '../app.css';
+	import Backdrop from '#lib/components/Backdrop.svelte';
 	import Nav from '#lib/components/Nav.svelte';
 	import Footer from '#lib/components/Footer.svelte';
 	import type { LayoutProps } from './$types';
@@ -7,6 +8,7 @@
 	let { children }: LayoutProps = $props();
 </script>
 
+<Backdrop />
 <a class="skip" href="#main">Skip to content</a>
 <Nav />
 <main id="main">
