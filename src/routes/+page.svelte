@@ -22,7 +22,6 @@
 <!-- Hero -->
 <section class="hero">
 	<HeroField />
-	<div class="fade" aria-hidden="true"></div>
 	<div class="container hero-inner">
 		<div class="hero-copy">
 			<h1 class="hero-in" style="--d: 0">
@@ -146,12 +145,10 @@
 		background: radial-gradient(closest-side, rgb(139 156 255 / 0.14), transparent);
 		pointer-events: none;
 	}
-	.fade {
-		position: absolute;
-		inset: auto 0 0 0;
-		height: 30%;
-		background: linear-gradient(transparent, var(--bg));
-		pointer-events: none;
+	/* Fade the terrain out at the bottom so it melts into the backdrop. */
+	.hero :global(canvas) {
+		mask-image: linear-gradient(#000 65%, transparent);
+		-webkit-mask-image: linear-gradient(#000 65%, transparent);
 	}
 	.hero-inner {
 		position: relative;
