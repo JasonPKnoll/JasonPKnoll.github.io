@@ -2,22 +2,30 @@
 	/**
 	 * A database diagram built from real tables instead of an image.
 	 *
-	 * Each foreign key is a wire from its row to the primary key of the table it
-	 * points to, with crow's foot ends: a fork on the "many" side and a double
-	 * bar on the "one" side. The diagram is laid out at a fixed width and scaled
-	 * down as a whole on narrow screens, so phones get the same picture. Picking
-	 * a table shows its fields and relationships in a readable panel below.
+	 * Layout: an optional banner table across the top (the one most others point
+	 * at), then columns of tables. Wires run in lanes in the gaps between
+	 * columns with right-angle turns, one lane per target table per gap, so
+	 * keys pointing at the same table merge into one trunk. Wires to the banner
+	 * go straight up into it. Ends use crow's foot notation: a fork on the
+	 * foreign key (many) and a double bar on the table it points to (one).
+	 *
+	 * The diagram is laid out at a fixed width and scaled down as a whole on
+	 * narrow screens. Picking a table shows its fields and relationships in a
+	 * readable panel below.
 	 */
 	import { tick } from 'svelte';
 	import { KeyRound, X } from '@lucide/svelte';
-	import type { Schema } from '#lib/projects.ts';
+	import type { Schema, SchemaTable } from '#lib/projects.ts';
 
 	let { schema }: { schema: Schema } = $props();
 
 	/** Width the diagram is laid out at. Narrower screens scale it down. */
-	const WIDTH = 820;
+	const WIDTH = 980;
+	const LANE_GAP = 10;
+	const CORNER = 7;
 
-	type Wire = { from: string; to: string; color: string; d: string; marks: string };
+	type Rel = { from: string; col: string; to: string };
+	type Wire = Rel & { color: string; d: string; marks: string };
 
 	let viewport: HTMLDivElement | undefined = $state();
 	let canvas: HTMLDivElement | undefined = $state();
@@ -35,7 +43,15 @@
 	const singular = (name: string) => name.replace(/_/g, ' ').replace(/s$/, '');
 	const plural = (name: string) => name.replace(/_/g, ' ') + (name.endsWith('s') ? '' : 's');
 
-	const relations = $derived(
+	const banner = $derived(schema.banner ? tableOf(schema.banner) : undefined);
+	const columns = $derived(
+		schema.columns.map((names) => names.map((n) => tableOf(n)).filter((t) => !!t))
+	);
+	const columnOf = $derived(
+		new Map(schema.columns.flatMap((names, i) => names.map((n) => [n, i] as const)))
+	);
+
+	const relations: Rel[] = $derived(
 		schema.tables.flatMap((t) =>
 			t.columns.filter((c) => c.ref).map((c) => ({ from: t.name, col: c.name, to: c.ref! }))
 		)
@@ -57,6 +73,71 @@
 		selected ? relations.filter((r) => r.from === selected || r.to === selected) : []
 	);
 
+	/**
+	 * Decide which gap (gutter) each wire runs in. Gutter g sits left of column g,
+	 * so column c has gutter c on its left and c + 1 on its right.
+	 */
+	function plan() {
+		const gutterOf = new Map<Rel, number>();
+		const lanesIn = (g: number) =>
+			new Set(
+				[...gutterOf].filter(([r, gg]) => gg === g && r.to !== schema.banner).map(([r]) => r.to)
+			);
+
+		const toTables = relations.filter((r) => r.to !== schema.banner);
+		// Wires between neighbouring columns first, then same-column ones, which
+		// reuse a lane to the same table when there is one.
+		const order = [...toTables].sort(
+			(a, b) =>
+				Number(columnOf.get(a.from) === columnOf.get(a.to)) -
+				Number(columnOf.get(b.from) === columnOf.get(b.to))
+		);
+		for (const r of order) {
+			const c = columnOf.get(r.from)!;
+			const p = columnOf.get(r.to)!;
+			if (p < c) gutterOf.set(r, c);
+			else if (p > c) gutterOf.set(r, c + 1);
+			else gutterOf.set(r, lanesIn(c).has(r.to) ? c : c + 1);
+		}
+
+		// Wires up to the banner leave on the side away from a table's other wires.
+		for (const r of relations.filter((r) => r.to === schema.banner)) {
+			const c = columnOf.get(r.from)!;
+			const sides = new Set(
+				toTables.filter((o) => o.from === r.from).map((o) => (gutterOf.get(o) === c ? 'L' : 'R'))
+			);
+			let g: number;
+			if (sides.size === 1) g = sides.has('L') ? c + 1 : c;
+			else g = lanesIn(c + 1).size < lanesIn(c).size ? c + 1 : c;
+			gutterOf.set(r, g);
+		}
+		return gutterOf;
+	}
+
+	/** Polyline with rounded corners. */
+	function rounded(points: [number, number][]) {
+		let d = `M${points[0][0]} ${points[0][1]}`;
+		for (let i = 1; i < points.length - 1; i++) {
+			const [px, py] = points[i - 1];
+			const [x, y] = points[i];
+			const [nx, ny] = points[i + 1];
+			const d1 = Math.hypot(x - px, y - py);
+			const d2 = Math.hypot(nx - x, ny - y);
+			const r = Math.min(CORNER, d1 / 2, d2 / 2);
+			if (r < 0.5) {
+				d += ` L${x} ${y}`;
+				continue;
+			}
+			const ax = x + ((px - x) / d1) * r;
+			const ay = y + ((py - y) / d1) * r;
+			const bx = x + ((nx - x) / d2) * r;
+			const by = y + ((ny - y) / d2) * r;
+			d += ` L${ax} ${ay} Q${x} ${y} ${bx} ${by}`;
+		}
+		const [lx, ly] = points[points.length - 1];
+		return `${d} L${lx} ${ly}`;
+	}
+
 	function measure() {
 		if (!viewport || !canvas) return;
 		scale = Math.min(1, viewport.clientWidth / WIDTH);
@@ -75,42 +156,82 @@
 			return {
 				l: (r.left - box.left) / k,
 				r: (r.right - box.left) / k,
+				b: (r.bottom - box.top) / k,
 				y: ((r.top + r.bottom) / 2 - box.top) / k
 			};
 		};
+		const card = (name: string) => rect(root.querySelector(`[data-table="${name}"]`));
 
-		wires = relations.map(({ from, col, to }) => {
-			const a = rect(root.querySelector(`[data-table="${from}"]`));
-			const b = rect(root.querySelector(`[data-table="${to}"]`));
+		// Column edges, then the centre line of each gutter.
+		const edges = schema.columns.map((names) => card(names[0]));
+		const n = edges.length;
+		const gutterMid = (g: number) =>
+			g === 0 ? edges[0].l - 18 : g === n ? edges[n - 1].r + 18 : (edges[g - 1].r + edges[g].l) / 2;
+
+		const gutterOf = plan();
+
+		// One lane per target table in each gutter. Lanes whose wires mostly come
+		// from the left sit on the left, and so on, to keep crossings down.
+		const lanes = new Map<string, number>();
+		for (let g = 0; g <= n; g++) {
+			const inG = [...gutterOf].filter(([, gg]) => gg === g).map(([r]) => r);
+			const targets = [...new Set(inG.map((r) => r.to))];
+			const lean = (to: string) => {
+				const sides = inG
+					.filter((r) => r.to === to)
+					.flatMap((r) => {
+						const s = [columnOf.get(r.from)! >= g ? 1 : -1];
+						if (to !== schema.banner) s.push(columnOf.get(to)! >= g ? 1 : -1);
+						return s;
+					});
+				return sides.reduce((a, b) => a + b, 0) / sides.length;
+			};
+			targets.sort((a, b) => lean(a) - lean(b));
+			targets.forEach((to, i) =>
+				lanes.set(`${g}:${to}`, gutterMid(g) + (i - (targets.length - 1) / 2) * LANE_GAP)
+			);
+		}
+
+		const top = banner ? card(banner.name) : null;
+
+		wires = relations.map((rel) => {
+			const { from, col, to } = rel;
+			const g = gutterOf.get(rel)!;
+			const lx = lanes.get(`${g}:${to}`)!;
+			const a = card(from);
+			const childRight = columnOf.get(from)! >= g; // child sits right of its gutter
+			const x1 = childRight ? a.l : a.r;
+			const n1 = childRight ? -1 : 1; // pointing out of the child, along the wire
 			const y1 = rect(root.querySelector(`[data-table="${from}"] [data-col="${col}"]`)).y;
-			const y2 = rect(root.querySelector(`[data-table="${to}"] [data-pk]`)).y;
-			// n1 and n2 point away from each card, along the wire.
-			let x1: number, x2: number, n1: number, n2: number, d: string;
 
-			if (a.l < b.r && b.l < a.r) {
-				// Same column: loop out around the side, away from the middle when possible.
-				const side = (a.l + a.r) / 2 < WIDTH / 2 - 10 ? -1 : 1;
-				x1 = side < 0 ? a.l : a.r;
-				x2 = side < 0 ? b.l : b.r;
-				n1 = n2 = side;
-				d = `M${x1} ${y1} C${x1 + side * 40} ${y1} ${x2 + side * 40} ${y2} ${x2} ${y2}`;
-			} else {
-				const dir = b.l > a.l ? 1 : -1;
-				x1 = dir > 0 ? a.r : a.l;
-				x2 = dir > 0 ? b.l : b.r;
-				n1 = dir;
-				n2 = -dir;
-				const dx = Math.max(28, Math.abs(x2 - x1) / 2);
-				d = `M${x1} ${y1} C${x1 + dir * dx} ${y1} ${x2 - dir * dx} ${y2} ${x2} ${y2}`;
-			}
-
-			// Crow's foot (many) at the foreign key, double bar (one) at the primary key.
+			// Crow's foot (many) at the foreign key.
 			const f = x1 + n1 * 12;
-			const marks =
-				`M${x1} ${y1 - 5.5} L${f} ${y1} L${x1} ${y1 + 5.5} M${x1 + n1 * 16} ${y1 - 5.5} V${y1 + 5.5} ` +
-				`M${x2 + n2 * 7} ${y2 - 5.5} V${y2 + 5.5} M${x2 + n2 * 11} ${y2 - 5.5} V${y2 + 5.5}`;
+			let marks = `M${x1} ${y1 - 5.5} L${f} ${y1} L${x1} ${y1 + 5.5} M${x1 + n1 * 16} ${y1 - 5.5} V${y1 + 5.5}`;
+			let d: string;
 
-			return { from, to, color: colorOf(to), d, marks };
+			if (to === schema.banner && top) {
+				const y2 = top.b;
+				d = rounded([
+					[x1, y1],
+					[lx, y1],
+					[lx, y2]
+				]);
+				marks += ` M${lx - 5.5} ${y2 + 7} H${lx + 5.5} M${lx - 5.5} ${y2 + 11} H${lx + 5.5}`;
+			} else {
+				const b = card(to);
+				const targetRight = columnOf.get(to)! >= g;
+				const x2 = targetRight ? b.l : b.r;
+				const n2 = targetRight ? -1 : 1;
+				const y2 = rect(root.querySelector(`[data-table="${to}"] [data-pk]`)).y;
+				d = rounded([
+					[x1, y1],
+					[lx, y1],
+					[lx, y2],
+					[x2, y2]
+				]);
+				marks += ` M${x2 + n2 * 7} ${y2 - 5.5} V${y2 + 5.5} M${x2 + n2 * 11} ${y2 - 5.5} V${y2 + 5.5}`;
+			}
+			return { ...rel, color: colorOf(to), d, marks };
 		});
 	}
 
@@ -134,12 +255,58 @@
 	}
 
 	const touches = (w: Wire) => w.from === active || w.to === active;
+	const onKey = (e: KeyboardEvent, name: string) => {
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
+			pick(name);
+		}
+	};
 </script>
 
 {#snippet oneToMany()}
 	<svg class="glyph" viewBox="0 0 48 12" aria-hidden="true">
 		<path d="M2 6H46M5 1V11M9 1V11M46 1L34 6L46 11M30 1V11" />
 	</svg>
+{/snippet}
+
+{#snippet tableCard(t: SchemaTable, wide: boolean)}
+	<div
+		role="button"
+		tabindex="0"
+		aria-pressed={selected === t.name}
+		aria-label="{t.name} table, show fields and relationships"
+		data-table={t.name}
+		class="card"
+		class:wide
+		class:dim={linked && !linked.has(t.name)}
+		class:current={active === t.name}
+		style:--c={t.color ? `var(--c-${t.color})` : null}
+		onclick={() => pick(t.name)}
+		onkeydown={(e) => onKey(e, t.name)}
+		onpointerenter={(e) => e.pointerType === 'mouse' && (hovered = t.name)}
+		onpointerleave={() => (hovered = null)}
+	>
+		<p class="title" class:colored={!!t.color}>{t.name}</p>
+		<div class="rows">
+			{#each t.columns as c (c.name)}
+				<div
+					class="row"
+					data-col={c.name}
+					data-pk={c.pk ? '' : undefined}
+					class:fk={!!c.ref}
+					style:--c={c.ref ? `var(--c-${colorOf(c.ref)})` : null}
+				>
+					<span class="fname">
+						{#if c.pk}<KeyRound size={12} aria-label="Primary key" />{/if}
+						{c.name}
+					</span>
+					<span class="ftype">
+						{#if c.ref}<span class="ref"><span aria-hidden="true">→</span> {c.ref}</span>{:else}{c.type}{/if}
+					</span>
+				</div>
+			{/each}
+		</div>
+	</div>
 {/snippet}
 
 <figure class="schema" aria-label={schema.label}>
@@ -154,63 +321,33 @@
 			class:has-active={!!active}
 			style:width="{WIDTH}px"
 			style:transform={ready && scale < 1 ? `scale(${scale})` : null}
-			style:--areas={schema.areas.map((row) => `"${row}"`).join(' ')}
 			bind:this={canvas}
 		>
 			<svg class="wires" aria-hidden="true">
 				{#each wires as w, i (i)}
-					<g class="wire" class:on={active && touches(w)} style:--c="var(--c-{w.color})">
+					<g class="wire" style:--c="var(--c-{w.color})">
+						<path d={w.d} />
+						<path d={w.marks} />
+					</g>
+				{/each}
+				<!-- The active table's wires again, on top of everything else. -->
+				{#each wires.filter(touches) as w, i (i)}
+					<g class="wire on" style:--c="var(--c-{w.color})">
 						<path class="line" d={w.d} />
-						<path class="marks" d={w.marks} />
+						<path d={w.marks} />
 					</g>
 				{/each}
 			</svg>
 
-			{#each schema.tables as t (t.name)}
-				<div
-					class="card"
-					role="button"
-					tabindex="0"
-					aria-pressed={selected === t.name}
-					aria-label="{t.name} table, show fields and relationships"
-					data-table={t.name}
-					class:dim={linked && !linked.has(t.name)}
-					class:current={active === t.name}
-					style:--area={t.name}
-					style:--c={t.color ? `var(--c-${t.color})` : null}
-					onclick={() => pick(t.name)}
-					onkeydown={(e) => {
-						if (e.key === 'Enter' || e.key === ' ') {
-							e.preventDefault();
-							pick(t.name);
-						}
-					}}
-					onpointerenter={(e) => e.pointerType === 'mouse' && (hovered = t.name)}
-					onpointerleave={() => (hovered = null)}
-				>
-					<table>
-						<caption class:colored={!!t.color}>{t.name}</caption>
-						<tbody>
-							{#each t.columns as c (c.name)}
-								<tr
-									data-col={c.name}
-									data-pk={c.pk ? '' : undefined}
-									class:fk={!!c.ref}
-									style:--c={c.ref ? `var(--c-${colorOf(c.ref)})` : null}
-								>
-									<th scope="row">
-										{#if c.pk}<KeyRound size={12} aria-label="Primary key" />{/if}
-										{c.name}
-									</th>
-									<td>
-										{#if c.ref}<span class="ref"><span aria-hidden="true">→</span> {c.ref}</span>{:else}{c.type}{/if}
-									</td>
-								</tr>
-							{/each}
-						</tbody>
-					</table>
-				</div>
-			{/each}
+			{#if banner}{@render tableCard(banner, true)}{/if}
+
+			<div class="columns" style:--n={columns.length}>
+				{#each columns as col, i (i)}
+					<div class="stack">
+						{#each col as t (t.name)}{@render tableCard(t, false)}{/each}
+					</div>
+				{/each}
+			</div>
 		</div>
 	</div>
 
@@ -250,7 +387,9 @@
 							<span class="n">1</span>
 							{@render oneToMany()}
 							<span class="n">N</span>
-							<span class="name" style:--c={tableOf(r.from)?.color ? `var(--c-${colorOf(r.from)})` : null}>{r.from}</span>
+							<span class="name" style:--c={tableOf(r.from)?.color ? `var(--c-${colorOf(r.from)})` : null}
+								>{r.from}</span
+							>
 						</span>
 						<span class="say">
 							One {singular(r.to)} has many {plural(r.from)}
@@ -291,13 +430,19 @@
 	}
 	.canvas {
 		position: relative;
-		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-		grid-template-areas: var(--areas);
-		gap: 2rem 3.4rem;
-		align-items: start;
-		padding: 2.25rem 2.5rem;
+		padding: 2rem 2.4rem 2.2rem;
 		transform-origin: 0 0;
+	}
+	.columns {
+		display: grid;
+		grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+		gap: 54px;
+		margin-top: 52px;
+	}
+	.stack {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
 	}
 
 	/* ---------- Wires ---------- */
@@ -309,31 +454,25 @@
 		pointer-events: none;
 		overflow: visible;
 	}
-	.wire {
-		color: var(--c);
-		opacity: 0.6;
-		transition: opacity 0.25s;
-	}
 	.wire path {
 		fill: none;
-		stroke: currentColor;
-		stroke-width: 1.4;
+		/* Solid colour, so wires sharing a lane merge cleanly into one trunk. */
+		stroke: color-mix(in srgb, var(--c) 62%, var(--bg-raised));
+		stroke-width: 1.5;
 		stroke-linecap: round;
 		stroke-linejoin: round;
+		transition: opacity 0.25s;
 	}
-	.has-active .wire {
-		opacity: 0.07;
+	.has-active .wire:not(.on) path {
+		opacity: 0.12;
 	}
-	.has-active .wire.on {
-		opacity: 1;
+	.wire.on path {
+		stroke: var(--c);
+		stroke-width: 1.9;
 	}
 	.wire.on .line {
-		stroke-width: 1.8;
 		stroke-dasharray: 5 4;
 		animation: flow 0.9s linear infinite;
-	}
-	.wire.on .marks {
-		stroke-width: 1.8;
 	}
 	@keyframes flow {
 		to {
@@ -344,12 +483,13 @@
 	/* ---------- Tables ---------- */
 	.card {
 		position: relative;
-		grid-area: var(--area);
 		border: 1px solid var(--border-strong);
 		border-radius: 12px;
 		background: var(--bg-card);
 		overflow: hidden;
 		cursor: pointer;
+		font-family: var(--font-mono);
+		font-size: 0.72rem;
 		transition:
 			opacity 0.25s,
 			border-color 0.25s,
@@ -365,16 +505,9 @@
 			0 0 0 1px var(--c, var(--text-dim)),
 			0 10px 30px rgb(0 0 0 / 0.35);
 	}
-	table {
-		width: 100%;
-		border-collapse: collapse;
-		font-family: var(--font-mono);
-		font-size: 0.74rem;
-	}
-	caption {
-		text-align: left;
-		padding: 0.6rem 0.8rem;
-		font-size: 0.72rem;
+	.title {
+		padding: 0.55rem 0.75rem;
+		font-size: 0.7rem;
 		font-weight: 600;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
@@ -382,38 +515,57 @@
 		background: rgb(255 255 255 / 0.03);
 		border-bottom: 1px solid var(--border-strong);
 	}
-	caption.colored {
+	.title.colored {
 		color: var(--c);
 		background: color-mix(in srgb, var(--c) 10%, transparent);
 		box-shadow: inset 0 2px 0 var(--c);
 	}
-	th,
-	td {
-		padding: 0.38rem 0.8rem;
-		text-align: left;
-		font-weight: 400;
+	.row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		padding: 0.34rem 0.65rem;
 		white-space: nowrap;
 	}
-	tr + tr {
+	.row + .row {
 		border-top: 1px solid var(--border);
 	}
-	th {
+	.fname {
 		color: var(--text);
 	}
-	th :global(svg) {
+	.fname :global(svg) {
 		display: inline-block;
 		vertical-align: -1px;
-		margin-right: 0.25rem;
+		margin-right: 0.2rem;
 		color: var(--c, var(--text-muted));
 	}
-	td {
-		text-align: right;
+	.ftype {
 		color: var(--text-dim);
 	}
-	tr.fk th {
+	.row.fk .fname {
 		color: var(--c);
+	}
+	.row.fk {
 		box-shadow: inset 2px 0 0 var(--c);
 	}
+
+	/* The banner lays its fields out side by side. */
+	.card.wide .rows {
+		display: grid;
+		grid-template-columns: repeat(5, minmax(0, 1fr));
+	}
+	.card.wide .row {
+		border-top: 0;
+		border-right: 1px solid var(--border);
+	}
+	.card.wide .row:nth-child(5n) {
+		border-right: 0;
+	}
+	.card.wide .row:nth-child(n + 6) {
+		border-top: 1px solid var(--border);
+	}
+
 	.ref {
 		display: inline-block;
 		padding: 0.05rem 0.45rem;
@@ -525,14 +677,12 @@
 		padding: 0.35rem 0;
 		border-bottom: 1px solid var(--border);
 	}
-	.fields li.fk {
+	.fields li.fk,
+	.fields li.fk .type {
 		color: var(--c);
 	}
 	.fields .type {
 		color: var(--text-dim);
-	}
-	.fields li.fk .type {
-		color: var(--c);
 	}
 	.fields :global(svg) {
 		display: inline-block;
