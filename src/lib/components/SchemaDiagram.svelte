@@ -13,7 +13,6 @@
 	 * narrow screens. Picking a table shows its fields and relationships in a
 	 * readable panel below.
 	 */
-	import { tick } from 'svelte';
 	import { KeyRound, X } from '@lucide/svelte';
 	import type { Schema, SchemaTable } from '#lib/projects.ts';
 
@@ -29,7 +28,6 @@
 
 	let viewport: HTMLDivElement | undefined = $state();
 	let canvas: HTMLDivElement | undefined = $state();
-	let panel: HTMLDivElement | undefined = $state();
 	let ready = $state(false);
 	let scale = $state(1);
 	let height = $state(0);
@@ -263,13 +261,8 @@
 		return () => observer.disconnect();
 	});
 
-	async function pick(name: string) {
+	function pick(name: string) {
 		selected = selected === name ? null : name;
-		// On a scaled-down diagram the details matter most, so bring them into view.
-		if (selected && scale < 0.8) {
-			await tick();
-			panel?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-		}
 	}
 
 	const touches = (w: Wire) => w.from === active || w.to === active;
@@ -377,7 +370,7 @@
 		<span class="key"><span class="ref" style:--c="var(--c-mint)">→ table</span> foreign key</span>
 	</div>
 
-	<div class="panel" bind:this={panel} aria-live="polite">
+	<div class="panel" aria-live="polite">
 		{#if picked}
 			<div class="panel-head" style:--c={picked.color ? `var(--c-${picked.color})` : null}>
 				<h4 class="mono">{picked.name}</h4>
