@@ -9,6 +9,7 @@
 	import Terminal from '#lib/components/Terminal.svelte';
 	import { projects } from '#lib/projects.ts';
 	import { reveal } from '#lib/reveal.ts';
+	import { person, website } from '#lib/schema.ts';
 	import { site } from '#lib/site.ts';
 
 	const [featured, ...rest] = [
@@ -25,7 +26,7 @@
 	] as const;
 </script>
 
-<Seo />
+<Seo type="profile" jsonLd={[person, website]} />
 
 <!-- Hero -->
 <section class="hero">

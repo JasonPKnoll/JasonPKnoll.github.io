@@ -1,6 +1,7 @@
 <script lang="ts">
 	import ProjectCard from '#lib/components/ProjectCard.svelte';
 	import Seo from '#lib/components/Seo.svelte';
+	import { breadcrumbs } from '#lib/schema.ts';
 	import { categories, projects } from '#lib/projects.ts';
 	import { flip } from 'svelte/animate';
 	import { fade } from 'svelte/transition';
@@ -21,7 +22,16 @@
 	);
 </script>
 
-<Seo title="Projects" description="Personal and Turing School projects by Jason Knoll." />
+<Seo
+	title="Projects"
+	description="Projects by Jason Knoll: a Unity VR koi pond, a Discord bot, and full-stack web apps in Rails and React built at the Turing School of Software & Design."
+	jsonLd={[
+		breadcrumbs([
+			{ name: 'Home', path: '/' },
+			{ name: 'Projects', path: '/projects' }
+		])
+	]}
+/>
 
 <section class="container page">
 	<header>

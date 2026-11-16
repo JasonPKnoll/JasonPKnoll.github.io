@@ -6,6 +6,7 @@
 	import Seo from '#lib/components/Seo.svelte';
 	import { categories } from '#lib/projects.ts';
 	import { reveal } from '#lib/reveal.ts';
+	import { breadcrumbs, projectPage } from '#lib/schema.ts';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -14,7 +15,22 @@
 		!!s.media?.length && s.media[0].height > s.media[0].width;
 </script>
 
-<Seo title={project.name} description={project.summary} />
+<Seo
+	title={project.name}
+	description={project.summary}
+	type="article"
+	image={project.cover.img.src}
+	imageAlt={project.coverAlt}
+	imageSize={{ width: project.cover.img.w, height: project.cover.img.h }}
+	jsonLd={[
+		projectPage(project, `/projects/${project.slug}`),
+		breadcrumbs([
+			{ name: 'Home', path: '/' },
+			{ name: 'Projects', path: '/projects' },
+			{ name: project.name, path: `/projects/${project.slug}` }
+		])
+	]}
+/>
 
 <article>
 	<header class="container head">

@@ -3,7 +3,15 @@ export const site = {
 	role: 'Software Developer',
 	url: 'https://www.jpknoll.com',
 	description:
-		'Jason Knoll — software developer building web apps, bots, and virtual reality experiences.',
+		'Jason Knoll is a software developer building full-stack web apps, Discord bots, and VR experiences with React, Python, Ruby on Rails, Unity, and Blender.',
+	twitter: '@JasonPKnoll',
+	/** Default social share card (static/og-image.jpg, regenerate if the portrait changes). */
+	ogImage: {
+		src: '/og-image.jpg',
+		width: 1200,
+		height: 630,
+		alt: 'Jason Knoll, Software Developer — web apps, bots, and virtual reality'
+	},
 	email: 'jason.p.knoll@gmail.com',
 
 	tagline: 'I build for the web, and for worlds you can step into.',

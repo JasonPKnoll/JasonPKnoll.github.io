@@ -4,7 +4,7 @@
 	import Seo from '#lib/components/Seo.svelte';
 </script>
 
-<Seo title={String(page.status)} description="Page not found." />
+<Seo title={String(page.status)} description="Page not found." noindex />
 
 <section class="container">
 	<p class="code mono gradient-text">{page.status}</p>
