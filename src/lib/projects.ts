@@ -74,7 +74,7 @@ export const projects: Project[] = [
 		category: 'personal',
 		status: 'Work in progress',
 		summary:
-			'A koi fish pond built in Unity for a virtual environment. Koi detect and avoid walls, seek out food, and reproduce — offspring inherit the colors of their parents.',
+			'A koi fish pond built in Unity for a virtual environment. Koi detect and avoid walls, seek out food, and reproduce. Offspring inherit the colors of their parents.',
 		description:
 			'Koi fish pond built in Unity for a Virtual Environment. Koi fish responsively detect and avoid walls, seek out food, and reproduce. Koi fish offspring inherit the colors of their parents.',
 		cover: koiCover,
@@ -176,7 +176,7 @@ export const projects: Project[] = [
 		kicker: 'Discord bot',
 		category: 'personal',
 		summary:
-			"A Discord bot that spreads emojis throughout a server by adding them to members' names — with per-server settings and moderation tools.",
+			"A Discord bot that spreads emojis throughout a server by adding them to members' names. It also has per-server settings and a few moderation tools.",
 		description:
 			"A Discord bot whose main functionality is to spread emojis throughout the server by adding them to existing members' names. The bot has some additional functionality for moderation, which will be expanded upon in the future.",
 		cover: discordCover,
@@ -193,7 +193,7 @@ export const projects: Project[] = [
 							'Admin commands only trigger when an admin is the one giving them. Otherwise the bot intentionally ignores them, with no indication that the command exists.',
 							"Server settings are stored in MongoDB. This allows the bot to be used in multiple servers, each able to set its own preferred emoji to spread throughout people's names, and its own designated channel for the bot to forward users' DMs to."
 						],
-						media: [video('images/fido_bot/bot_admin_commands.mp4', 'Running admin commands in Discord', 1000, 179)],
+						media: [video('images/fido_bot/bot_admin_commands.mp4', 'Running admin commands in Discord', 1000, 178)],
 						table: {
 							columns: ['Command', 'Default', 'Example', 'Description'],
 							rows: [
@@ -213,7 +213,7 @@ export const projects: Project[] = [
 						body: [
 							'Commands any user can use to manually gain and give emojis to other users. The bot is unable to give emojis to anyone with equal or greater authority in the server, so it cannot give emojis to admins, and it has been set to ignore other bots.'
 						],
-						media: [video('images/fido_bot/bot_user_commands.mp4', 'Running user commands in Discord', 999, 190)],
+						media: [video('images/fido_bot/bot_user_commands.mp4', 'Running user commands in Discord', 998, 190)],
 						table: {
 							columns: ['Command', 'Example', 'Description'],
 							rows: [
@@ -230,7 +230,7 @@ export const projects: Project[] = [
 					{
 						title: "What's with all the corn?",
 						body: [
-							'The corn — much like everything else in this section — is an inside joke for the server this bot was originally designed for.'
+							'The corn, much like everything else in this section, is an inside joke for the server this bot was originally designed for.'
 						],
 						media: [video('images/fido_bot/bot_corn.mp4', 'Fido Bot responding enthusiastically to the word corn', 1362, 418)],
 						table: {

@@ -28,11 +28,13 @@
 		jsonLd = []
 	}: Props = $props();
 
-	const fullTitle = $derived(title ? `${title} · ${site.name}` : `${site.name} — ${site.role}`);
+	const fullTitle = $derived(title ? `${title} | ${site.name}` : `${site.name} | ${site.role}`);
 	const canonical = $derived(site.url + page.url.pathname);
 	const ogImage = $derived(new URL(image ?? site.ogImage.src, site.url).href);
 	const ogAlt = $derived(image ? (imageAlt ?? fullTitle) : site.ogImage.alt);
 	const ogSize = $derived(image ? imageSize : site.ogImage);
+
+	const twitter = site.socials.find((s) => s.name === 'x')!.handle;
 
 	// `<` is escaped so content can never close the script tag early.
 	const ldScript = (data: Record<string, unknown>) =>
@@ -64,8 +66,8 @@
 	{/if}
 
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:site" content={site.twitter} />
-	<meta name="twitter:creator" content={site.twitter} />
+	<meta name="twitter:site" content={twitter} />
+	<meta name="twitter:creator" content={twitter} />
 	<meta name="twitter:title" content={fullTitle} />
 	<meta name="twitter:description" content={description} />
 	<meta name="twitter:image" content={ogImage} />

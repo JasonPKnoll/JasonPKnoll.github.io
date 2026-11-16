@@ -115,7 +115,7 @@
 													<tr>
 														{#each row as cell, ci (ci)}
 															<td class:code={ci === 0 || (ci < row.length - 1 && cell.startsWith('!'))}
-																>{cell || '—'}</td
+																>{cell || '-'}</td
 															>
 														{/each}
 													</tr>

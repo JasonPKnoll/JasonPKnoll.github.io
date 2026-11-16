@@ -28,11 +28,11 @@ npm run preview   # serve the production build
 
 ### Adding a demo clip
 
-Convert screen recordings to MP4 + poster rather than shipping GIFs:
+Convert screen recordings to MP4 + poster rather than shipping GIFs. Keep `fps=30`: GIFs with tiny frame delays otherwise come out at 100 fps, which many phone browsers won't play.
 
 ```sh
 ffmpeg -i clip.gif -movflags +faststart -pix_fmt yuv420p \
-  -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -crf 24 -preset slow -an clip.mp4
+  -vf "fps=30,scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -crf 24 -preset slow -an clip.mp4
 ffmpeg -i clip.mp4 -frames:v 1 -q:v 4 clip.jpg
 ```
 
@@ -40,4 +40,6 @@ Then reference it in `projects.ts` with `video('images/…/clip.mp4', alt, width
 
 ## Deploy
 
-Pushing to `main` runs `.github/workflows/deploy.yml`, which builds and publishes `build/` to GitHub Pages. The custom domain is kept via `static/CNAME`.
+Pushing to `main` runs `.github/workflows/deploy.yml`, which type-checks, builds, and publishes `build/` to GitHub Pages. Pages must have **Settings → Pages → Source** set to **GitHub Actions**; the custom domain (`www.jpknoll.com`) is configured there too, so no `CNAME` file is needed.
+
+The social share card is `static/og-image.jpg` (1200×630). If you change the portrait or tagline, regenerate it to match.

@@ -19,7 +19,7 @@ export const person = {
 	description: site.intro,
 	knowsAbout: Object.values(site.stack).flat(),
 	alumniOf: { '@type': 'EducationalOrganization', name: 'Turing School of Software & Design' },
-	sameAs: Object.values(site.socials)
+	sameAs: site.socials.map((s) => s.href)
 };
 
 export const website = {
