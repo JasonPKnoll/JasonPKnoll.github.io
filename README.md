@@ -1,53 +1,43 @@
-# WhatATheme
-**WhatATheme** is a customizable Jekyll Portfolio theme which supports blogging. You can use this theme in order to create an elegant, fully responsive portfolio.
+# jpknoll.com
 
-#### You can checkout the [**Demo Here**](https://thedevslot.github.io/WhatATheme/) :boom:
+Personal portfolio for Jason Knoll, built with [SvelteKit](https://svelte.dev/docs/kit) and fully prerendered to static HTML for GitHub Pages.
 
-![WhatATheme](assets/images/meta.jpg)
+## Develop
 
-# Features :sparkles:
-* Free and Easy setup
-* No Coding Required
-* Compatible with [Github Pages](https://pages.github.com/)
-* Responsive and Blogging Ready
-* HTML Compressor using [Jekyll Compress HTML](https://jch.penibelst.de/)
-* Minified CSS using SaSS
-* CMS Admin Support using [Jekyll Admin](https://jekyll.github.io/jekyll-admin/)
-* Supports Latest [Jekyll 4.x](https://jekyllrb.com/) and [Bundler](https://bundler.io/)
-* Stylesheet built using SaSS
-* Comments using Disqus
-* Analytics using Google Analytics
-* Instant Search using [Simple Jekyll Search](https://github.com/christian-fei/Simple-Jekyll-Search/)
+Requires Node 24 (see `.nvmrc`; SvelteKit 3 needs ≥ 22.17).
 
-# Installation :books:
-### System Requirements
-* [Ruby](https://www.ruby-lang.org/en/)
-* [Jekyll](https://jekyllrb.com/)
-> You can read **What is Jekyll** [**here**](https://thedevslot.github.io/WhatATheme/blog/what-is-jekyll-how-to-use-it)
-### Up and Running
-* Fork the [Repository](https://github.com/thedevslot/WhatATheme/)
-* Clone or download the repository into directory of your choice: `git clone https://github.com/thedevslot/WhatATheme.git`
-* Inside the directory run `bundle install`
-* Host WhatATheme locally by running `bundle exec jekyll s`
+```sh
+nvm use 24
+npm install
+npm run dev       # http://localhost:5173
+npm run check     # type-check
+npm run build     # static site → build/
+npm run preview   # serve the production build
+```
 
-> You can read **How to Install and use WhatATheme?** [**here**](https://thedevslot.github.io/WhatATheme/blog/how-to-install-whatatheme)
+## Where things live
 
-[<img src="https://i.imgur.com/TVI946Z.png" width="250" />](https://youtu.be/VfPa2c9kwhQ)
+| What | Where |
+| --- | --- |
+| Bio, socials, skills | `src/lib/site.ts` |
+| Projects (cards + detail pages) | `src/lib/projects.ts` |
+| Old Jekyll URL redirects | `src/lib/legacy.ts` |
+| Card / portrait images (optimized at build) | `src/lib/assets/` |
+| Project demo clips & screenshots | `static/images/` |
+| Original GIF sources (not deployed) | `media-src/` |
 
----
+### Adding a demo clip
 
-### Content Credits :green_heart:
-* [Hero Image](https://images.pexels.com/photos/220444/pexels-photo-220444.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940) used as a background image in the very first section of Homepage.
-* [Author Image](https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png) used in the Author Section.
-* [Font Awesome](https://fontawesome.com/)
-* [Poppins Font](https://fonts.google.com/specimen/Poppins)
-* [Memphis Pattern](https://www.freepik.com/free-vector/memphis-pattern-background_4034913.htm#page=1&query=memphis%20pattern&position=23) used for some Social Media Images and the Favicon.
+Convert screen recordings to MP4 + poster rather than shipping GIFs:
 
----
+```sh
+ffmpeg -i clip.gif -movflags +faststart -pix_fmt yuv420p \
+  -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -crf 24 -preset slow -an clip.mp4
+ffmpeg -i clip.mp4 -frames:v 1 -q:v 4 clip.jpg
+```
 
-### Credits :bulb:
-* [Sneha Omer](http://sassyecoder.github.io/)
-* [Harsh Trivedi](http://harsh98trivedi.github.io/)
+Then reference it in `projects.ts` with `video('images/…/clip.mp4', alt, width, height)`.
 
-### License
-The contents of this repository are licensed under the [**GNU General Public License v2.0**](https://github.com/thedevslot/WhatATheme/blob/master/LICENSE)
+## Deploy
+
+Pushing to `main` runs `.github/workflows/deploy.yml`, which builds and publishes `build/` to GitHub Pages. The custom domain is kept via `static/CNAME`.
