@@ -34,7 +34,7 @@
 		filter: drop-shadow(0 0 6px rgb(124 242 201 / 0.3));
 	}
 	.bar {
-		--duration: 5s;
+		--duration: 16s;
 		transform-box: fill-box;
 		transform-origin: center;
 		animation: rise var(--duration) linear infinite;

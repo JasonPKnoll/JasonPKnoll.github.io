@@ -20,11 +20,37 @@ export type Table = {
 	rows: string[][];
 };
 
+export type SchemaColor = 'mint' | 'blue' | 'coral' | 'pink';
+
+export type SchemaColumn = {
+	name: string;
+	type: string;
+	pk?: boolean;
+	/** Foreign key: the name of the table it points to. */
+	ref?: string;
+};
+
+export type SchemaTable = {
+	name: string;
+	/** Only tables other tables point at need a color; their foreign keys use it. */
+	color?: SchemaColor;
+	columns: SchemaColumn[];
+};
+
+/** A database diagram, drawn on the page instead of shown as an image. */
+export type Schema = {
+	label: string;
+	/** CSS grid-template-areas rows (three columns), using table names. */
+	areas: string[];
+	tables: SchemaTable[];
+};
+
 export type Section = {
 	title: string;
 	body?: string[];
 	media?: Media[];
 	table?: Table;
+	schema?: Schema;
 };
 
 export type Group = {
@@ -65,6 +91,71 @@ const image = (src: AssetPath, alt: string, width: number, height: number): Medi
 	width,
 	height
 });
+
+const pk: SchemaColumn = { name: 'id', type: 'integer', pk: true };
+const timestamps: SchemaColumn = { name: 'timestamps', type: 'datetime' };
+const fk = (name: string, ref: string): SchemaColumn => ({ name, type: 'foreign key', ref });
+const col = (name: string, type: string): SchemaColumn => ({ name, type });
+
+const helpNetworkSchema: Schema = {
+	label: 'Entity relationship diagram of the HeLP Network database',
+	areas: [
+		'connections question_flags question_votes',
+		'users posts tagging',
+		'users responses tag',
+		'response_flags response_votes .'
+	],
+	tables: [
+		{
+			name: 'users',
+			color: 'mint',
+			columns: [
+				pk,
+				col('username', 'string'),
+				col('password', 'string'),
+				col('email', 'string'),
+				col('title', 'string'),
+				col('is_active', 'boolean'),
+				col('is_staff', 'boolean'),
+				col('is_admin', 'boolean'),
+				col('is_superuser', 'boolean'),
+				timestamps
+			]
+		},
+		{
+			name: 'connections',
+			columns: [pk, fk('user_sent', 'users'), fk('user_received', 'users'), col('status', 'enum'), timestamps]
+		},
+		{
+			name: 'posts',
+			color: 'blue',
+			columns: [pk, fk('user', 'users'), col('title', 'string'), col('body', 'string'), col('quarantine', 'boolean'), timestamps]
+		},
+		{
+			name: 'question_flags',
+			columns: [pk, fk('user', 'users'), fk('post', 'posts'), col('comment', 'string'), col('status', 'enum'), timestamps]
+		},
+		{
+			name: 'question_votes',
+			columns: [pk, fk('user', 'users'), fk('post', 'posts'), col('vote_type', 'enum'), timestamps]
+		},
+		{ name: 'tagging', columns: [pk, fk('post', 'posts'), fk('tag', 'tag')] },
+		{ name: 'tag', color: 'pink', columns: [pk, col('name', 'string'), timestamps] },
+		{
+			name: 'responses',
+			color: 'coral',
+			columns: [pk, fk('post', 'posts'), fk('user', 'users'), col('body', 'string'), col('quarantine', 'boolean'), timestamps]
+		},
+		{
+			name: 'response_votes',
+			columns: [pk, fk('user', 'users'), fk('response', 'responses'), col('vote_type', 'enum'), timestamps]
+		},
+		{
+			name: 'response_flags',
+			columns: [pk, fk('user', 'users'), fk('response', 'responses'), col('comment', 'string'), col('status', 'enum'), timestamps]
+		}
+	]
+};
 
 export const projects: Project[] = [
 	{
@@ -274,7 +365,7 @@ export const projects: Project[] = [
 					{
 						title: 'Database schema',
 						body: ['Relational database built out with PostgreSQL.'],
-						media: [image('images/help_network/schema.png', 'Entity relationship diagram of the HeLP Network database', 1486, 1182)]
+						schema: helpNetworkSchema
 					}
 				]
 			},

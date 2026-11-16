@@ -3,6 +3,7 @@
 	import { ArrowLeft, ArrowRight, ExternalLink, Trophy } from '@lucide/svelte';
 	import BrandIcon from '#lib/components/BrandIcon.svelte';
 	import MediaFrame from '#lib/components/MediaFrame.svelte';
+	import SchemaDiagram from '#lib/components/SchemaDiagram.svelte';
 	import Seo from '#lib/components/Seo.svelte';
 	import { categories } from '#lib/projects.ts';
 	import { reveal } from '#lib/reveal.ts';
@@ -104,6 +105,7 @@
 										{#each section.media as m (m.src)}<MediaFrame media={m} />{/each}
 									</div>
 								{/if}
+								{#if section.schema}<SchemaDiagram schema={section.schema} />{/if}
 								{#if section.table}
 									<div class="table-wrap">
 										<table>
