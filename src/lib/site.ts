@@ -44,7 +44,6 @@ export const site = {
 			handle: 'Message me',
 			href: 'https://discord.com/users/948668827355463800'
 		},
-		{ name: 'itch', label: 'itch.io', handle: 'timelincoln', href: 'https://timelincoln.itch.io' },
 		{ name: 'x', label: 'X (Twitter)', handle: '@JasonPKnoll', href: 'https://x.com/JasonPKnoll' }
 	]
 } as const;

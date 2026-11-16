@@ -22,10 +22,10 @@
 	/** Width the diagram is laid out at. Narrower screens scale it down. */
 	const WIDTH = 980;
 	const LANE_GAP = 10;
-	const CORNER = 7;
+	const CORNER = 12;
 
 	type Rel = { from: string; col: string; to: string };
-	type Wire = Rel & { color: string; d: string; marks: string };
+	type Wire = Rel & { color: string; d: string; cone: string; marks: string };
 
 	let viewport: HTMLDivElement | undefined = $state();
 	let canvas: HTMLDivElement | undefined = $state();
@@ -166,7 +166,7 @@
 		const edges = schema.columns.map((names) => card(names[0]));
 		const n = edges.length;
 		const gutterMid = (g: number) =>
-			g === 0 ? edges[0].l - 18 : g === n ? edges[n - 1].r + 18 : (edges[g - 1].r + edges[g].l) / 2;
+			g === 0 ? edges[0].l - 26 : g === n ? edges[n - 1].r + 26 : (edges[g - 1].r + edges[g].l) / 2;
 
 		const gutterOf = plan();
 
@@ -204,9 +204,12 @@
 			const n1 = childRight ? -1 : 1; // pointing out of the child, along the wire
 			const y1 = rect(root.querySelector(`[data-table="${from}"] [data-col="${col}"]`)).y;
 
-			// Crow's foot (many) at the foreign key.
-			const f = x1 + n1 * 12;
-			let marks = `M${x1} ${y1 - 5.5} L${f} ${y1} L${x1} ${y1 + 5.5} M${x1 + n1 * 16} ${y1 - 5.5} V${y1 + 5.5}`;
+			// "Many" end: a rounded cone. Two prongs leave the line together, then
+			// flare out onto the table edge, with a soft fill between them.
+			const j = x1 + n1 * 14;
+			const c = x1 + n1 * 5;
+			const cone = `M${j} ${y1} Q${c} ${y1} ${x1} ${y1 - 6.5} L${x1} ${y1 + 6.5} Q${c} ${y1} ${j} ${y1}Z`;
+			let marks = `M${j} ${y1} Q${c} ${y1} ${x1} ${y1 - 6.5} M${j} ${y1} Q${c} ${y1} ${x1} ${y1 + 6.5}`;
 			let d: string;
 
 			if (to === schema.banner && top) {
@@ -216,7 +219,8 @@
 					[lx, y1],
 					[lx, y2]
 				]);
-				marks += ` M${lx - 5.5} ${y2 + 7} H${lx + 5.5} M${lx - 5.5} ${y2 + 11} H${lx + 5.5}`;
+				// "One" end: a double bar right against the table.
+				marks += ` M${lx - 5} ${y2 + 4} H${lx + 5} M${lx - 5} ${y2 + 8} H${lx + 5}`;
 			} else {
 				const b = card(to);
 				const targetRight = columnOf.get(to)! >= g;
@@ -229,9 +233,9 @@
 					[lx, y2],
 					[x2, y2]
 				]);
-				marks += ` M${x2 + n2 * 7} ${y2 - 5.5} V${y2 + 5.5} M${x2 + n2 * 11} ${y2 - 5.5} V${y2 + 5.5}`;
+				marks += ` M${x2 + n2 * 4} ${y2 - 5} V${y2 + 5} M${x2 + n2 * 8} ${y2 - 5} V${y2 + 5}`;
 			}
-			return { ...rel, color: colorOf(to), d, marks };
+			return { ...rel, color: colorOf(to), d, cone, marks };
 		});
 	}
 
@@ -265,7 +269,7 @@
 
 {#snippet oneToMany()}
 	<svg class="glyph" viewBox="0 0 48 12" aria-hidden="true">
-		<path d="M2 6H46M5 1V11M9 1V11M46 1L34 6L46 11M30 1V11" />
+		<path d="M2 6H46M5 1V11M9 1V11M33 6Q41 6 46 0.5M33 6Q41 6 46 11.5" />
 	</svg>
 {/snippet}
 
@@ -327,6 +331,7 @@
 				{#each wires as w, i (i)}
 					<g class="wire" style:--c="var(--c-{w.color})">
 						<path d={w.d} />
+						<path class="cone" d={w.cone} />
 						<path d={w.marks} />
 					</g>
 				{/each}
@@ -334,6 +339,7 @@
 				{#each wires.filter(touches) as w, i (i)}
 					<g class="wire on" style:--c="var(--c-{w.color})">
 						<path class="line" d={w.d} />
+						<path class="cone" d={w.cone} />
 						<path d={w.marks} />
 					</g>
 				{/each}
@@ -462,6 +468,10 @@
 		stroke-linecap: round;
 		stroke-linejoin: round;
 		transition: opacity 0.25s;
+	}
+	.wire path.cone {
+		fill: color-mix(in srgb, var(--c) 28%, transparent);
+		stroke: none;
 	}
 	.has-active .wire:not(.on) path {
 		opacity: 0.12;
