@@ -21,6 +21,7 @@ npm run preview   # serve the production build
 | --- | --- |
 | Bio, socials, skills | `src/lib/site.ts` |
 | Projects (cards + detail pages) | `src/lib/projects.ts` |
+| Resume (page, PDF and Markdown downloads, all built from this) | `src/lib/resume.ts` |
 | Old Jekyll URL redirects | `src/lib/legacy.ts` |
 | Card / portrait images (optimized at build) | `src/lib/assets/` |
 | Project demo clips & screenshots | `static/images/` |

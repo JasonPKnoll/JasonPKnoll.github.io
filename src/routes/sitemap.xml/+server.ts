@@ -5,7 +5,7 @@ import type { RequestHandler } from './$types';
 export const prerender = true;
 
 // Only canonical pages: the legacy redirect URLs and error page are left out on purpose.
-const paths = ['/', '/projects', ...projects.map((p) => `/projects/${p.slug}`)];
+const paths = ['/', '/resume', '/projects', ...projects.map((p) => `/projects/${p.slug}`)];
 
 export const GET: RequestHandler = () => {
 	const urls = paths.map((path) => `\t<url><loc>${site.url}${path}</loc></url>`).join('\n');
