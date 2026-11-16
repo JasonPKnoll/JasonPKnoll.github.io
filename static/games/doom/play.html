@@ -1,0 +1,140 @@
+<!doctype html>
+<!--
+	The doom.exe player. Runs inside an iframe on the home page so js-dos and
+	its stylesheet stay isolated from the rest of the site. Reports progress
+	to the parent window with postMessage.
+
+	doom19s.zip is the official DOOM v1.9 shareware release, kept unmodified
+	as the shareware terms require. DOOM is © id Software.
+-->
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="robots" content="noindex" />
+		<title>doom.exe</title>
+		<link
+			rel="stylesheet"
+			href="https://cdn.jsdelivr.net/npm/js-dos@8.5.3/dist/js-dos.css"
+			integrity="sha384-tYrgAxbRPufJUrIUwrHMumsQ0yWXdNaYMGKazEkzSgtkpSAps5dIS71lqDFtoVNF"
+			crossorigin="anonymous"
+		/>
+		<style>
+			html,
+			body,
+			#dos {
+				margin: 0;
+				width: 100%;
+				height: 100%;
+				background: #000;
+				overflow: hidden;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="dos"></div>
+		<script
+			src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js"
+			integrity="sha384-DT0Ls0mO7JmjTnT+oBuMhEJzYJO1zUqzuuMXNdnOmOQRIpN2BgSjvBV/j50NngIT"
+			crossorigin="anonymous"
+		></script>
+		<script
+			src="https://cdn.jsdelivr.net/npm/js-dos@8.5.3/dist/js-dos.js"
+			integrity="sha384-tpCX90eRzpJLpH4PcI+3QbJ04KXaHYTPTZWQ5klhoRPDf5n/ZCsrjLAqphsCl/zq"
+			crossorigin="anonymous"
+		></script>
+		<script>
+			const post = (msg) => parent.postMessage({ doom: msg }, location.origin);
+
+			// Sound Blaster 16 at the DOSBox defaults, so DOOM has sound and music.
+			const dosboxConf = `
+[sdl]
+autolock=false
+[dosbox]
+memsize=16
+[cpu]
+core=auto
+cputype=auto
+cycles=max
+[sblaster]
+sbtype=sb16
+sbbase=220
+irq=7
+dma=1
+hdma=5
+oplmode=auto
+[autoexec]
+mount c .
+c:
+DOOM.EXE
+`;
+			const defaultCfg = [
+				'snd_musicdevice 3',
+				'snd_sfxdevice 3',
+				'snd_sbport 544',
+				'snd_sbirq 7',
+				'snd_sbdma 1',
+				'snd_channels 8',
+				'sfx_volume 8',
+				'music_volume 6',
+				'usemouse 0',
+				'screenblocks 10'
+			].join('\r\n');
+
+			async function step(text, work) {
+				post({ step: text });
+				try {
+					const result = await work();
+					post({ ok: true });
+					return result;
+				} catch (e) {
+					post({ fail: String(e) });
+					throw e;
+				}
+			}
+
+			(async () => {
+				await step('loading DOSBox (js-dos 8.5.3)', async () => {
+					if (typeof Dos !== 'function' || typeof fflate !== 'object') throw new Error('js-dos did not load');
+				});
+				const zip = await step('fetching doom19s.zip, 2.4 MB', async () => {
+					const res = await fetch('doom19s.zip');
+					if (!res.ok) throw new Error(String(res.status));
+					return new Uint8Array(await res.arrayBuffer());
+				});
+				const initFs = await step('unpacking DOOM.EXE and DOOM1.WAD', async () => {
+					const files = fflate.unzipSync(zip, {
+						filter: (f) => f.name === 'DOOM.EXE' || f.name === 'DOOM1.WAD'
+					});
+					return [
+						...Object.entries(files).map(([path, contents]) => ({ path, contents })),
+						{ path: 'DEFAULT.CFG', contents: new TextEncoder().encode(defaultCfg) }
+					];
+				});
+				post({ step: 'C:\\> DOOM.EXE' });
+				Dos(document.getElementById('dos'), {
+					dosboxConf,
+					initFs,
+					pathPrefix: 'https://cdn.jsdelivr.net/npm/js-dos@8.5.3/dist/emulators/',
+					kiosk: true,
+					autoStart: true,
+					theme: 'dark',
+					renderAspect: '4/3',
+					imageRendering: 'pixelated',
+					quickSave: false,
+					autoSave: false,
+					mouseCapture: false,
+					onEvent: (event) => {
+						if (event === 'ci-ready') {
+							post({ ok: true });
+							setTimeout(() => {
+								post({ ready: true });
+								document.querySelector('#dos canvas')?.focus();
+							}, 900);
+						}
+					}
+				});
+			})().catch(() => {});
+		</script>
+	</body>
+</html>
