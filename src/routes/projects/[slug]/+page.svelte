@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { ArrowLeft, ArrowRight, ExternalLink, Trophy } from '@lucide/svelte';
+	import { ArrowLeft, ArrowRight, ArrowUpRight, Trophy } from '@lucide/svelte';
 	import BrandIcon from '#lib/components/BrandIcon.svelte';
 	import MediaFrame from '#lib/components/MediaFrame.svelte';
+	import SchemaDiagram from '#lib/components/SchemaDiagram.svelte';
 	import Seo from '#lib/components/Seo.svelte';
 	import { categories } from '#lib/projects.ts';
 	import { reveal } from '#lib/reveal.ts';
@@ -50,21 +51,24 @@
 
 		<p class="lede">{project.description}</p>
 
-		<div class="meta">
-			<ul class="tech" aria-label="Technologies">
-				{#each project.tech as t (t)}<li class="chip">{t}</li>{/each}
-			</ul>
-			<div class="links">
+		{#if project.links.length}
+			<div class="repos">
 				{#each project.links as link (link.href)}
-					<a class="btn" href={link.href} target="_blank" rel="noopener noreferrer">
-						{#if link.href.includes('github.com')}<BrandIcon name="github" size={16} />{:else}<ExternalLink
-								size={16}
-							/>{/if}
-						{link.label}
+					<a class="repo" href={link.href} target="_blank" rel="noopener noreferrer">
+						<span class="repo-icon"><BrandIcon name="github" size={22} /></span>
+						<span class="repo-text">
+							<strong>{link.label}</strong>
+							<span class="mono">{link.href.replace('https://github.com/', '')}</span>
+						</span>
+						<ArrowUpRight class="repo-arrow" size={18} />
 					</a>
 				{/each}
 			</div>
-		</div>
+		{/if}
+
+		<ul class="tech" aria-label="Technologies">
+			{#each project.tech as t (t)}<li class="chip">{t}</li>{/each}
+		</ul>
 
 		<div class="cover">
 			<enhanced:img src={project.cover} alt={project.coverAlt} sizes="(min-width: 1160px) 1100px, 100vw" />
@@ -104,6 +108,7 @@
 										{#each section.media as m (m.src)}<MediaFrame media={m} />{/each}
 									</div>
 								{/if}
+								{#if section.schema}<SchemaDiagram schema={section.schema} />{/if}
 								{#if section.table}
 									<div class="table-wrap">
 										<table>
@@ -194,26 +199,65 @@
 		color: var(--text-muted);
 		max-width: 65ch;
 	}
-	.meta {
+	.repos {
 		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		gap: 1.5rem;
 		flex-wrap: wrap;
-		margin: 2rem 0 2.5rem;
+		gap: 0.75rem;
+		margin-top: 1.75rem;
+	}
+	.repo {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.85rem;
+		padding: 0.7rem 1.1rem 0.7rem 0.7rem;
+		border-radius: 14px;
+		border: 1px solid rgb(124 242 201 / 0.35);
+		background: linear-gradient(120deg, rgb(124 242 201 / 0.1), rgb(139 156 255 / 0.08));
+		transition:
+			border-color 0.2s,
+			transform 0.2s var(--ease),
+			box-shadow 0.2s;
+	}
+	.repo:hover {
+		border-color: var(--accent);
+		transform: translateY(-2px);
+		box-shadow: 0 12px 32px -14px rgb(124 242 201 / 0.45);
+	}
+	.repo-icon {
+		display: grid;
+		place-items: center;
+		width: 2.5rem;
+		height: 2.5rem;
+		border-radius: 10px;
+		background: var(--text);
+		color: var(--bg);
+		flex: none;
+	}
+	.repo-text {
+		display: grid;
+		line-height: 1.3;
+	}
+	.repo-text strong {
+		font-weight: 600;
+	}
+	.repo-text .mono {
+		font-size: 0.78rem;
+		color: var(--text-muted);
+	}
+	.repo :global(.repo-arrow) {
+		color: var(--accent);
+		transition: transform 0.2s var(--ease);
+	}
+	.repo:hover :global(.repo-arrow) {
+		transform: translate(2px, -2px);
 	}
 	.tech {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.45rem;
 		list-style: none;
-		margin: 0;
+		margin: 1.5rem 0 2.5rem;
 		padding: 0;
-	}
-	.links {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.6rem;
 	}
 	.cover {
 		border-radius: 20px;
