@@ -23,13 +23,21 @@ export type Result = { lines: Line[]; action?: Action; clear?: boolean; cwd?: st
 
 type File = { type: 'file'; body: () => Line[]; action?: Action };
 /** `browse` dirs are entered with cd; other dirs with an action take you to that page. */
-type Dir = { type: 'dir'; children: Record<string, Node>; action?: Action; browse?: boolean };
+type Dir = {
+	type: 'dir';
+	children: Record<string, Node>;
+	action?: Action;
+	browse?: boolean;
+	/** Shows up in listings but can't be entered. */
+	locked?: boolean;
+};
 type Node = File | Dir;
 
 const p = (t: string, tone?: Tone): Line => [{ t, tone }];
 const blank: Line = [{ t: '' }];
 
-const root: Dir = {
+/** The home folder, /home/jk, where the shell starts. */
+const home: Dir = {
 	type: 'dir',
 	children: {
 		projects: {
@@ -104,6 +112,34 @@ const root: Dir = {
 	}
 };
 
+const file = (...lines: string[]): File => ({ type: 'file', body: () => lines.map((l) => p(l)) });
+
+/** The whole machine. Home is the only interesting part, the rest is set dressing. */
+const root: Dir = {
+	type: 'dir',
+	children: {
+		bin: {
+			type: 'dir',
+			children: {} // filled in below, once the command list exists
+		},
+		etc: {
+			type: 'dir',
+			children: {
+				hostname: file('portfolio'),
+				motd: file(
+					'Welcome to jpknoll.com.',
+					'Everything here is real, from the projects to the resume.',
+					'Run help to see what you can do.'
+				),
+				'os-release': file('NAME="Portfolio OS"', 'VERSION="1.0"', 'BUILT_WITH="SvelteKit"', 'HOME_URL="https://www.jpknoll.com"')
+			}
+		},
+		home: { type: 'dir', children: { jk: home } },
+		root: { type: 'dir', locked: true, children: {} },
+		tmp: { type: 'dir', children: {} }
+	}
+};
+
 /** Outside places `open` knows by name. */
 const links: Record<string, string> = {
 	email: `mailto:${site.email}`,
@@ -127,12 +163,22 @@ const commands = [
 	'clear'
 ] as const;
 
-export const prompt = (cwd: string[]) => (cwd.length ? `~/${cwd.join('/')}` : '~');
+(root.children.bin as Dir).children = Object.fromEntries(
+	commands.map((c) => [c, { type: 'file', body: () => [p(`${c}: binary file. Just type ${c} to run it.`, 'muted')] }])
+);
 
-/** Turns a typed path into a list of names from the root, or null if it climbs out. */
+export const HOME = ['home', 'jk'];
+
+const inHome = (parts: string[]) => HOME.every((name, i) => parts[i] === name);
+
+/** How a path is shown: under home it starts with ~, anywhere else it is absolute. */
+export const prompt = (parts: string[]) =>
+	inHome(parts) ? ['~', ...parts.slice(HOME.length)].join('/') : `/${parts.join('/')}`;
+
+/** Turns a typed path into a list of names from the filesystem root. */
 function normalize(path: string, cwd: string[]): string[] {
-	const parts = path.startsWith('/') || path.startsWith('~') ? [] : [...cwd];
-	for (const seg of path.replace(/^~\/?/, '').split('/')) {
+	const parts = path.startsWith('/') ? [] : path.startsWith('~') ? [...HOME] : [...cwd];
+	for (const seg of path.replace(/^~/, '').split('/')) {
 		if (!seg || seg === '.') continue;
 		if (seg === '..') parts.pop();
 		else parts.push(seg);
@@ -158,20 +204,21 @@ function find(path: string, cwd: string[]): { node: Node; parts: string[] } | un
 	const parts = normalize(path, cwd);
 	const node = walk(parts);
 	if (node) return { node, parts };
-	const rest = normalize(path, []);
-	const inProjects = walk(['projects', ...rest]);
-	if (inProjects) return { node: inProjects, parts: ['projects', ...rest] };
+	if (path.startsWith('/') || path.startsWith('~')) return;
+	const rest = normalize(path, [...HOME, 'projects']);
+	const inProjects = walk(rest);
+	if (inProjects) return { node: inProjects, parts: rest };
 }
 
 const listing = (dir: Dir, parts: string[]): Line => {
 	const entries = Object.entries(dir.children);
 	const line: Line = [];
 	entries.forEach(([name, node], i) => {
-		const path = [...parts, name].join('/');
+		const path = prompt([...parts, name]);
 		line.push(
 			node.type === 'dir'
-				? { t: `${name}/`, tone: 'blue', run: `cd ~/${path}` }
-				: { t: name, run: `cat ~/${path}` }
+				? { t: `${name}/`, tone: node.locked ? 'dim' : 'blue', run: node.locked ? undefined : `cd ${path}` }
+				: { t: name, run: `cat ${path}` }
 		);
 		if (i < entries.length - 1) line.push({ t: '  ' });
 	});
@@ -242,13 +289,16 @@ export function run(input: string, state: State): Result {
 			const hit = arg ? find(arg, state.cwd) : { node: walk(state.cwd)!, parts: state.cwd };
 			if (!hit) return err(`ls: ${arg}: No such file or directory`);
 			if (hit.node.type === 'file') return { lines: [p(arg!)] };
+			if (hit.node.locked) return err(`ls: ${arg}: Permission denied`);
+			if (!Object.keys(hit.node.children).length) return { lines: [] };
 			return { lines: [listing(hit.node, hit.parts)] };
 		}
 		case 'cd': {
-			if (!arg || arg === '~' || arg === '/') return { lines: [], cwd: [] };
+			if (!arg) return { lines: [], cwd: HOME };
 			const hit = find(arg, state.cwd);
 			if (!hit) return err(`cd: no such file or directory: ${arg}`);
 			if (hit.node.type === 'file') return err(`cd: not a directory: ${arg}`);
+			if (hit.node.locked) return err(`cd: permission denied: ${arg}`);
 			// Directories that are pages on the site take you there.
 			const { action, browse } = hit.node;
 			if (action && !browse) return { lines: [opening(action)], action };
@@ -283,7 +333,7 @@ export function run(input: string, state: State): Result {
 			return { lines: [opening(action)], action };
 		}
 		case 'pwd':
-			return { lines: [p(`/home/jk${state.cwd.length ? '/' + state.cwd.join('/') : ''}`)] };
+			return { lines: [p(`/${state.cwd.join('/')}`)] };
 		case 'whoami':
 			return { lines: [p(`${site.name.toLowerCase().replace(' ', '-')}, ${site.role.toLowerCase()}`, 'accent')] };
 		case 'neofetch':
@@ -380,7 +430,7 @@ export function complete(input: string, cwd: string[]): { input: string; options
 		const dirPath = base ? find(base, cwd) : { node: walk(cwd)!, parts: cwd };
 		let pool: string[] = dirPath?.node.type === 'dir' ? names(dirPath.node.children) : [];
 		// Projects complete from anywhere, matching how cd finds them.
-		if (!base && words[0] === 'cd') pool = [...new Set([...pool, ...names((root.children.projects as Dir).children)])];
+		if (!base && words[0] === 'cd') pool = [...new Set([...pool, ...names((home.children.projects as Dir).children)])];
 		options = pool.filter((n) => n.startsWith(last.slice(base.length)));
 	}
 	if (!options.length) return { input, options: [] };

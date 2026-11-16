@@ -8,7 +8,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { projects } from '#lib/projects.ts';
-	import { complete, prompt, run, type Action, type Line } from '#lib/shell.ts';
+	import { HOME, complete, prompt, run, type Action, type Line } from '#lib/shell.ts';
 	import { site } from '#lib/site.ts';
 
 	type Entry = { prompt?: string; cmd?: string; line?: Line; intro?: number };
@@ -36,7 +36,7 @@
 	] satisfies Entry[]).map((e, i) => ({ ...e, intro: i }));
 
 	let entries = $state<Entry[]>(intro);
-	let cwd = $state<string[]>([]);
+	let cwd = $state<string[]>(HOME);
 	let value = $state('');
 	let past = $state<string[]>([]);
 	let caret = $state(0);
